@@ -58,42 +58,37 @@ def login(session: requests.Session, email: str, password: str) -> str:
     return r.text
 
 
-def extract_count(html: str) -> int:
-    m = re.search(r"Všechny\s*\((\d+)\)", html)
-    if not m:
-        sys.exit("CHYBA: nepodařilo se najít text 'Všechny (N)' na stránce — možná se změnila struktura")
-    return int(m.group(1))
+def extract_counts(html: str) -> tuple[int, int]:
+    """Vrátí (vsechny, doporucene). Confirmed = vsechny - doporucene."""
+    m_all = re.search(r"Všechny\s*\((\d+)\)", html)
+    m_rec = re.search(r"Doporučené\s*\((\d+)\)", html)
+    if not m_all:
+        sys.exit("CHYBA: nepodařilo se najít 'Všechny (N)' na stránce")
+    if not m_rec:
+        sys.exit("CHYBA: nepodařilo se najít 'Doporučené (N)' na stránce")
+    return int(m_all.group(1)), int(m_rec.group(1))
 
 
 def load_state() -> dict:
     if STATE_FILE.exists():
         return json.loads(STATE_FILE.read_text(encoding="utf-8"))
-    return {"count": None}
+    return {"total": None, "confirmed": None}
 
 
-def save_state(count: int) -> None:
+def save_state(total: int, confirmed: int) -> None:
     STATE_FILE.write_text(
-        json.dumps({"count": count}, ensure_ascii=False, indent=2),
+        json.dumps({"total": total, "confirmed": confirmed}, ensure_ascii=False, indent=2),
         encoding="utf-8",
     )
 
 
-def send_email(new_count: int, old_count: int) -> None:
+def send_email(subject: str, body: str) -> None:
     smtp_host = env("SMTP_HOST", required=False, default="smtp.gmail.com")
     smtp_port = int(env("SMTP_PORT", required=False, default="587"))
     smtp_user = env("SMTP_USER")
     smtp_pass = env("SMTP_PASS")
     mail_to = env("MAIL_TO")
     mail_from = env("MAIL_FROM", required=False, default=smtp_user)
-
-    diff = new_count - old_count
-    subject = f"Nová objednávka přepisu (+{diff})"
-    body = (
-        f"Na {LIST_URL} přibyly nové objednávky.\n\n"
-        f"Dříve: {old_count}\n"
-        f"Nyní:  {new_count} (+{diff})\n\n"
-        f"Otevřít: {LIST_URL}\n"
-    )
 
     msg = EmailMessage()
     msg["Subject"] = subject
@@ -105,7 +100,7 @@ def send_email(new_count: int, old_count: int) -> None:
         s.starttls()
         s.login(smtp_user, smtp_pass)
         s.send_message(msg)
-    print(f"E-mail odeslán na {mail_to}")
+    print(f"E-mail odeslán: {subject}")
 
 
 def main() -> None:
@@ -113,24 +108,45 @@ def main() -> None:
     session.headers.update({"User-Agent": "Mozilla/5.0 (order-notifier)"})
 
     html = login(session, env("CUN_EMAIL"), env("CUN_PASSWORD"))
-    count = extract_count(html)
-    print(f"Počet objednávek: {count}")
+    total, recommended = extract_counts(html)
+    confirmed = total - recommended
+    print(f"Všechny: {total}, Doporučené: {recommended}, Potvrzené: {confirmed}")
 
     state = load_state()
-    last = state.get("count")
+    last_total = state.get("total")
+    last_confirmed = state.get("confirmed")
 
-    if last is None:
-        print("První běh — ukládám aktuální počet bez notifikace.")
-        save_state(count)
+    if last_total is None:
+        print("První běh — ukládám aktuální stav bez notifikace.")
+        save_state(total, confirmed)
         return
 
-    if count > last:
-        print(f"NOVÉ objednávky: {last} → {count}")
-        send_email(count, last)
-        save_state(count)
-    elif count < last:
-        print(f"Počet klesl ({last} → {count}), aktualizuji stav.")
-        save_state(count)
+    changed = False
+
+    if total > last_total:
+        diff = total - last_total
+        send_email(
+            f"Nová objednávka (+{diff})",
+            f"Na {LIST_URL} přibyl{'a' if diff == 1 else 'y'} nová objednávka.\n\n"
+            f"Dříve: {last_total}\nNyní:  {total} (+{diff})\n\nOtevřít: {LIST_URL}\n",
+        )
+        changed = True
+
+    if confirmed > last_confirmed:
+        diff = confirmed - last_confirmed
+        send_email(
+            f"Potvrzení objednávky (+{diff})",
+            f"Na {LIST_URL} bylo potvrzeno {diff} objednávk{'a' if diff == 1 else 'y'}.\n\n"
+            f"Potvrzené dříve: {last_confirmed}\nPotvrzené nyní:  {confirmed} (+{diff})\n\nOtevřít: {LIST_URL}\n",
+        )
+        changed = True
+
+    if total < last_total or confirmed < last_confirmed:
+        print(f"Počty klesly (Všechny: {last_total}→{total}, Potvrzené: {last_confirmed}→{confirmed}), aktualizuji stav.")
+        changed = True
+
+    if changed:
+        save_state(total, confirmed)
     else:
         print("Beze změny.")
 
