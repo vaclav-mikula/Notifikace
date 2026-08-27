@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Kontrola nových objednávek na objednavky.cun.cz.
 
-Přihlásí se, načte seznam objednávek, porovná s uloženým stavem
-(seen_ids.json) a při nové objednávce pošle e-mail. Stav se ukládá
-zpět do repozitáře přes GitHub Actions.
+Přihlásí se, přečte počet objednávek z textu "Všechny (N)"
+a při zvýšení pošle e-mail. Stav (poslední známý počet) se
+ukládá do seen_count.json a commituje zpět přes GitHub Actions.
 """
 
 import json
@@ -19,12 +19,7 @@ import requests
 BASE = "https://objednavky.cun.cz"
 LIST_URL = f"{BASE}/objednavky"
 LOGIN_URL = f"{BASE}/login"
-STATE_FILE = Path(__file__).parent / "seen_ids.json"
-
-# URL formát: https://objednavky.cun.cz/13443-nazev-objednavky
-ID_PATTERNS = [
-    re.compile(r'href="(?:https://objednavky\.cun\.cz)?/(\d+)-'),
-]
+STATE_FILE = Path(__file__).parent / "seen_count.json"
 
 
 def env(name: str, required: bool = True, default: str = "") -> str:
@@ -37,9 +32,9 @@ def env(name: str, required: bool = True, default: str = "") -> str:
 def get_csrf(html: str) -> str:
     m = re.search(r'name="_token"\s+value="([^"]+)"', html)
     if not m:
-        m = re.search(r'name="csrf-token"\s+content="([^"]+)"', html)
+        m = re.search(r'content="([^"]+)"\s+name="csrf-token"', html)
     if not m:
-        sys.exit("CHYBA: nepodařilo se najít CSRF token na přihlašovací stránce")
+        sys.exit("CHYBA: nepodařilo se najít CSRF token")
     return m.group(1)
 
 
@@ -48,53 +43,42 @@ def login(session: requests.Session, email: str, password: str) -> str:
     r.raise_for_status()
     token = get_csrf(r.text)
 
-    r = session.post(
+    session.post(
         LOGIN_URL,
         data={"_token": token, "email": email, "password": password, "remember": "1"},
         timeout=30,
         allow_redirects=True,
-    )
-    r.raise_for_status()
+    ).raise_for_status()
 
-    # Po přihlášení načteme seznam objednávek
     r = session.get(LIST_URL, timeout=30)
     r.raise_for_status()
 
-    if 'name="password"' in r.text and 'name="email"' in r.text:
-        sys.exit("CHYBA: přihlášení selhalo (vrácena přihlašovací stránka) — zkontroluj e-mail/heslo")
+    if 'name="password"' in r.text:
+        sys.exit("CHYBA: přihlášení selhalo — zkontroluj CUN_EMAIL a CUN_PASSWORD")
     return r.text
 
 
-def extract_ids(html: str) -> set[str]:
-    ids: set[str] = set()
-    for pat in ID_PATTERNS:
-        ids.update(pat.findall(html))
-
-    # DEBUG: hledá /ČÍSLO- kdekoliv v HTML (odstraň po ověření)
-    raw = re.findall(r'/(\d{3,})-[a-záčďéěíňóřšťúůýž]', html)
-    print(f"DEBUG /ČÍSLO- vzory ({len(raw)}): {raw[:10]}")
-    # Vypíše část HTML okolo prvního výskytu objednávky
-    m = re.search(r'/\d{3,}-', html)
-    if m:
-        start = max(0, m.start() - 100)
-        print("DEBUG kontext:", html[start:start+300])
-
-    return ids
+def extract_count(html: str) -> int:
+    m = re.search(r"Všechny\s*\((\d+)\)", html)
+    if not m:
+        sys.exit("CHYBA: nepodařilo se najít text 'Všechny (N)' na stránce — možná se změnila struktura")
+    return int(m.group(1))
 
 
 def load_state() -> dict:
     if STATE_FILE.exists():
         return json.loads(STATE_FILE.read_text(encoding="utf-8"))
-    return {"seen": [], "seeded": False}
+    return {"count": None}
 
 
-def save_state(state: dict) -> None:
+def save_state(count: int) -> None:
     STATE_FILE.write_text(
-        json.dumps(state, ensure_ascii=False, indent=2), encoding="utf-8"
+        json.dumps({"count": count}, ensure_ascii=False, indent=2),
+        encoding="utf-8",
     )
 
 
-def send_email(new_ids: list[str]) -> None:
+def send_email(new_count: int, old_count: int) -> None:
     smtp_host = env("SMTP_HOST", required=False, default="smtp.gmail.com")
     smtp_port = int(env("SMTP_PORT", required=False, default="587"))
     smtp_user = env("SMTP_USER")
@@ -102,12 +86,12 @@ def send_email(new_ids: list[str]) -> None:
     mail_to = env("MAIL_TO")
     mail_from = env("MAIL_FROM", required=False, default=smtp_user)
 
-    count = len(new_ids)
-    subject = f"Nová objednávka přepisu ({count})" if count > 1 else "Nová objednávka přepisu"
+    diff = new_count - old_count
+    subject = f"Nová objednávka přepisu (+{diff})"
     body = (
-        f"Na {LIST_URL} se objevila nová objednávka.\n\n"
-        f"Počet nových: {count}\n"
-        f"ID: {', '.join(new_ids)}\n\n"
+        f"Na {LIST_URL} přibyly nové objednávky.\n\n"
+        f"Dříve: {old_count}\n"
+        f"Nyní:  {new_count} (+{diff})\n\n"
         f"Otevřít: {LIST_URL}\n"
     )
 
@@ -121,47 +105,34 @@ def send_email(new_ids: list[str]) -> None:
         s.starttls()
         s.login(smtp_user, smtp_pass)
         s.send_message(msg)
-    print(f"E-mail odeslán na {mail_to} (nových: {count})")
+    print(f"E-mail odeslán na {mail_to}")
 
 
 def main() -> None:
-    email = env("CUN_EMAIL")
-    password = env("CUN_PASSWORD")
-
     session = requests.Session()
     session.headers.update({"User-Agent": "Mozilla/5.0 (order-notifier)"})
 
-    html = login(session, email, password)
-    current_ids = extract_ids(html)
-    print(f"Nalezeno objednávek: {len(current_ids)}")
-
-    if not current_ids:
-        # Ochrana: pokud parser nic nenašel, nechceme smazat stav ani
-        # falešně tvrdit, že objednávky zmizely. Skončíme bez změny.
-        print("VAROVÁNÍ: nenalezeny žádné ID objednávek — možná se změnila struktura stránky. Stav neměním.")
-        sys.exit(0)
+    html = login(session, env("CUN_EMAIL"), env("CUN_PASSWORD"))
+    count = extract_count(html)
+    print(f"Počet objednávek: {count}")
 
     state = load_state()
-    seen = set(state.get("seen", []))
+    last = state.get("count")
 
-    new_ids = sorted(current_ids - seen, key=lambda x: int(x))
-
-    if not state.get("seeded"):
-        # První běh: uložíme aktuální stav bez notifikace
-        print("První běh — ukládám aktuální stav bez notifikace.")
-        save_state({"seen": sorted(current_ids, key=lambda x: int(x)), "seeded": True})
+    if last is None:
+        print("První běh — ukládám aktuální počet bez notifikace.")
+        save_state(count)
         return
 
-    if new_ids:
-        print(f"NOVÉ objednávky: {new_ids}")
-        send_email(new_ids)
+    if count > last:
+        print(f"NOVÉ objednávky: {last} → {count}")
+        send_email(count, last)
+        save_state(count)
+    elif count < last:
+        print(f"Počet klesl ({last} → {count}), aktualizuji stav.")
+        save_state(count)
     else:
-        print("Žádné nové objednávky.")
-
-    # Uložíme aktuální stav (sjednocení, aby nezmizely dřívější)
-    save_state(
-        {"seen": sorted(seen | current_ids, key=lambda x: int(x)), "seeded": True}
-    )
+        print("Beze změny.")
 
 
 if __name__ == "__main__":
