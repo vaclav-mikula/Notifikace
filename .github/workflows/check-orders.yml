@@ -1,0 +1,53 @@
+name: Kontrola objednávek
+
+on:
+  schedule:
+    # Každých 5 minut (nejkratší povolený interval GitHub Actions).
+    # Pozn.: při vytížení GitHubu se běh může o pár minut zpozdit.
+    - cron: "*/5 * * * *"
+  workflow_dispatch: {}  # umožní ruční spuštění tlačítkem
+
+# Potřeba pro commit stavu (seen_ids.json) zpět do repozitáře
+permissions:
+  contents: write
+
+concurrency:
+  group: check-orders
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instalace závislostí
+        run: pip install -r requirements.txt
+
+      - name: Kontrola nových objednávek
+        env:
+          CUN_EMAIL: ${{ secrets.CUN_EMAIL }}
+          CUN_PASSWORD: ${{ secrets.CUN_PASSWORD }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          MAIL_FROM: ${{ secrets.MAIL_FROM }}
+          MAIL_TO: ${{ secrets.MAIL_TO }}
+        run: python check_orders.py
+
+      - name: Uložení stavu (seen_ids.json)
+        run: |
+          if [[ -n "$(git status --porcelain seen_ids.json)" ]]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add seen_ids.json
+            git commit -m "Aktualizace stavu objednávek [skip ci]"
+            git push
+          else
+            echo "Beze změny stavu."
+          fi
