@@ -126,7 +126,7 @@ def main() -> None:
     if total > last_total:
         diff = total - last_total
         send_email(
-            f"Nová objednávka (+{diff})",
+            f"ČUN Nová objednávka (+{diff})",
             f"Na {LIST_URL} přibyl{'a' if diff == 1 else 'y'} nová objednávka.\n\n"
             f"Dříve: {last_total}\nNyní:  {total} (+{diff})\n\nOtevřít: {LIST_URL}\n",
         )
@@ -135,7 +135,7 @@ def main() -> None:
     if confirmed > last_confirmed:
         diff = confirmed - last_confirmed
         send_email(
-            f"Potvrzení objednávky (+{diff})",
+            f"ČUN Potvrzení objednávky (+{diff})",
             f"Na {LIST_URL} bylo potvrzeno {diff} objednávk{'a' if diff == 1 else 'y'}.\n\n"
             f"Potvrzené dříve: {last_confirmed}\nPotvrzené nyní:  {confirmed} (+{diff})\n\nOtevřít: {LIST_URL}\n",
         )
