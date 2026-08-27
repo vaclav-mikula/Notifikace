@@ -69,6 +69,15 @@ def extract_ids(html: str) -> set[str]:
     ids: set[str] = set()
     for pat in ID_PATTERNS:
         ids.update(pat.findall(html))
+
+    # DEBUG: vypíše všechny href obsahující čísla (odstraň po ověření)
+    hrefs = re.findall(r'href=["\']([^"\']*\d[^"\']*)["\']', html)
+    print(f"DEBUG href s čísly ({len(hrefs)}):")
+    for h in hrefs[:20]:
+        print(f"  {h}")
+    if len(html) < 500:
+        print("DEBUG celá stránka:", html)
+
     return ids
 
 
