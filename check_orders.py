@@ -150,6 +150,13 @@ def main() -> None:
     else:
         print("Beze změny.")
 
+    # DOČASNÝ TEST — smaž po ověření
+    if total > 10:
+        send_email(
+            "ČUN TEST — ověření notifikací",
+            f"Testovací e-mail funguje.\n\nAktuální stav: Všechny={total}, Doporučené={recommended}, Potvrzené={confirmed}\n\nOtevřít: {LIST_URL}\n",
+        )
+
 
 if __name__ == "__main__":
     main()
