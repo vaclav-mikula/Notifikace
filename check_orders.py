@@ -21,11 +21,9 @@ LIST_URL = f"{BASE}/objednavky"
 LOGIN_URL = f"{BASE}/login"
 STATE_FILE = Path(__file__).parent / "seen_ids.json"
 
-# Vzory pro ID objednávky v odkazech (Laravel typicky /objednavky/123)
+# URL formát: https://objednavky.cun.cz/13443-nazev-objednavky
 ID_PATTERNS = [
-    re.compile(r"objednavky/(\d+)"),
-    re.compile(r"objednavka/(\d+)"),
-    re.compile(r"objednavky/detail/(\d+)"),
+    re.compile(r'href="(?:https://objednavky\.cun\.cz)?/(\d+)-'),
 ]
 
 
