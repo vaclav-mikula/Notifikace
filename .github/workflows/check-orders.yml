@@ -7,7 +7,7 @@ on:
     - cron: "*/5 * * * *"
   workflow_dispatch: {}  # umožní ruční spuštění tlačítkem
 
-# Potřeba pro commit stavu (seen_ids.json) zpět do repozitáře
+# Potřeba pro commit stavu (seen_count.json) zpět do repozitáře
 permissions:
   contents: write
 
@@ -40,9 +40,9 @@ jobs:
           MAIL_TO: ${{ secrets.MAIL_TO }}
         run: python check_orders.py
 
-      - name: Uložení stavu (seen_ids.json)
+      - name: Uložení stavu (seen_count.json)
         run: |
-          if [[ -n "$(git status --porcelain seen_ids.json)" ]]; then
+          if [[ -n "$(git status --porcelain seen_count.json)" ]]; then
             git config user.name "github-actions[bot]"
             git config user.email "github-actions[bot]@users.noreply.github.com"
             git add seen_count.json
