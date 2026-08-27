@@ -70,10 +70,14 @@ def extract_ids(html: str) -> set[str]:
     for pat in ID_PATTERNS:
         ids.update(pat.findall(html))
 
-    # DEBUG: ukáže strukturu stránky (odstraň po ověření)
-    print("DEBUG délka HTML:", len(html))
-    print("DEBUG prvních 3000 znaků:")
-    print(html[:3000])
+    # DEBUG: hledá /ČÍSLO- kdekoliv v HTML (odstraň po ověření)
+    raw = re.findall(r'/(\d{3,})-[a-záčďéěíňóřšťúůýž]', html)
+    print(f"DEBUG /ČÍSLO- vzory ({len(raw)}): {raw[:10]}")
+    # Vypíše část HTML okolo prvního výskytu objednávky
+    m = re.search(r'/\d{3,}-', html)
+    if m:
+        start = max(0, m.start() - 100)
+        print("DEBUG kontext:", html[start:start+300])
 
     return ids
 
