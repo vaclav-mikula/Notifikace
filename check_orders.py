@@ -23,7 +23,9 @@ STATE_FILE = Path(__file__).parent / "seen_count.json"
 
 
 def env(name: str, required: bool = True, default: str = "") -> str:
-    val = os.environ.get(name, default)
+    val = os.environ.get(name, "").strip()
+    if not val:
+        val = default
     if required and not val:
         sys.exit(f"CHYBA: chybí proměnná prostředí {name}")
     return val
