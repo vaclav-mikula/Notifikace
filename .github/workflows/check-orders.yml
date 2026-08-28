@@ -2,10 +2,14 @@ name: Kontrola objednávek
 
 on:
   schedule:
-    # Každých 5 minut, posunuté mimo přesné pětiminutovky (:03, :08, :13…),
-    # aby běhy nepadaly do špičky GitHubu (kolem :00), kdy je zahazuje.
-    # Pozn.: GitHub cron je "best-effort" — reálně bývá o pár minut zpožděný.
-    - cron: "3-59/5 * * * *"
+    # Po-Pá, každých 10 minut, okno 7:30-18:45 pražského LETNÍHO času.
+    # GitHub cron je v UTC a NEŘEŠÍ letní/zimní čas — proto je okno psané
+    # v UTC (léto = Praha-2h): 05:30-16:40 UTC. V zimě (Praha-1h) se okno
+    # přirozeně posune na 6:30-17:40 pražského času (to uživateli vyhovuje).
+    # Cca 68 běhů/den → ~1480 účtovaných min/měsíc (limit privátního repa 2000).
+    - cron: "30-59/10 5 * * 1-5"   # 07:30, 07:40, 07:50 Praha (léto)
+    - cron: "*/10 6-15 * * 1-5"    # 08:00-17:50 Praha (léto)
+    - cron: "0-45/10 16 * * 1-5"   # 18:00-18:40 Praha (léto)
   workflow_dispatch: {}  # umožní ruční spuštění tlačítkem
 
 # Potřeba pro commit stavu (seen_count.json) zpět do repozitáře
