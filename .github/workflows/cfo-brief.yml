@@ -1,0 +1,30 @@
+name: CFO týdenní briefing
+
+on:
+  schedule:
+    # Každé pondělí v 06:00 CET (05:00 UTC).
+    # V létě CEST = Praha+2h, takže email přijde v 7:00 CEST.
+    # V zimě CET = Praha+1h → přijde přesně v 6:00.
+    - cron: "0 5 * * 1"
+  workflow_dispatch: {}  # ruční spuštění pro testování
+
+jobs:
+  brief:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instalace závislostí
+        run: pip install -r cfo-brief/requirements.txt
+
+      - name: Generování a odeslání briefingu
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          FROM_EMAIL: ${{ secrets.FROM_EMAIL }}
+          TO_EMAIL: ${{ secrets.TO_EMAIL }}
+        run: python cfo-brief/brief.py
