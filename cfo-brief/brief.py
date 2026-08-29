@@ -2,8 +2,11 @@ import os
 import sys
 import requests
 import markdown
-import anthropic
+from google import genai
+from google.genai import types
 from datetime import datetime
+
+MODEL = "gemini-2.5-pro"  # zdarma přes Google AI Studio; přepni na gemini-2.5-flash pro rychlost
 
 SYSTEM_PROMPT = """\
 Jsi zkušený finanční analytik připravující týdenní briefing pro CFO mezinárodní banky.
@@ -52,17 +55,16 @@ RESEND_URL = "https://api.resend.com/emails"
 
 
 def generate_brief(date_str: str) -> str:
-    client = anthropic.Anthropic()
-    response = client.messages.create(
-        model="claude-opus-5",
-        max_tokens=4096,
-        system=SYSTEM_PROMPT,
-        tools=[{"type": "web_search_20260209", "name": "web_search", "max_uses": 8}],
-        messages=[{"role": "user", "content": BRIEF_PROMPT.format(date=date_str)}],
+    client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
+    response = client.models.generate_content(
+        model=MODEL,
+        contents=BRIEF_PROMPT.format(date=date_str),
+        config=types.GenerateContentConfig(
+            system_instruction=SYSTEM_PROMPT,
+            tools=[types.Tool(google_search=types.GoogleSearch())],
+        ),
     )
-    return "\n\n".join(
-        block.text for block in response.content if block.type == "text"
-    )
+    return response.text
 
 
 def build_html(content_md: str, date_str: str) -> str:
@@ -97,7 +99,7 @@ def build_html(content_md: str, date_str: str) -> str:
 <body>
 <h1>CFO Týdenní briefing &mdash; {date_str}</h1>
 {body}
-<div class="footer">Generováno automaticky &middot; Claude Opus 5 + web search &middot; {date_str}</div>
+<div class="footer">Generováno automaticky &middot; Gemini 2.5 Pro + Google Search &middot; {date_str}</div>
 </body>
 </html>"""
 
