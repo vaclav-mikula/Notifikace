@@ -2,10 +2,10 @@ name: CFO týdenní briefing
 
 on:
   schedule:
-    # Každé pondělí v 06:00 CET (05:00 UTC).
-    # V létě CEST = Praha+2h, takže email přijde v 7:00 CEST.
-    # V zimě CET = Praha+1h → přijde přesně v 6:00.
-    - cron: "0 5 * * 1"
+    # Každé pondělí v 05:30 CET (04:30 UTC).
+    # V létě CEST = Praha+2h, takže email přijde v 6:30 CEST.
+    # V zimě CET = Praha+1h → přijde přesně v 5:30.
+    - cron: "30 4 * * 1"
   workflow_dispatch: {}  # ruční spuštění pro testování
 
 jobs:
