@@ -10,6 +10,8 @@ MODEL = "gemini-3.7-flash"  # nejnovější generace, zdarma přes Google AI Stu
 
 SYSTEM_PROMPT = """\
 Jsi zkušený finanční analytik připravující týdenní briefing pro CFO mezinárodní banky.
+Čtenář má výborné účetní a finanční znalosti, ale potřebuje budovat přehled v makroekonomii a geopolitice.
+Proto u každé ekonomické nebo geopolitické zprávy vždy vysvětli i kontext: co ta událost znamená, proč k ní došlo, a jaký má dopad na banku nebo finanční trhy. Nepředpokládej, že čtenář zná ekonomické mechanismy — raději je stručně vysvětli.
 Píšeš česky. Mezinárodní názvy institucí, firem a termíny ponecháš v originále (Fed, ECB, Basel III apod.).
 Buď konkrétní — uváděj čísla, procenta, názvy zemí a institucí. Vyhni se obecným frázím.
 """
@@ -25,13 +27,13 @@ Struktura (dodržuj přesně):
 - Centrální banky: ECB, Fed, ČNB — rozhodnutí, signály, výhled
 - Měnové kurzy, klíčové komodity (ropa, zlato)
 - Akciové a dluhopisové trhy — výrazné pohyby a jejich příčiny
-(4–6 bodů, každý max. 2 věty: fakt + co to znamená pro banku/CFO)
+(4–6 bodů; ke každému bodu: fakt s čísly + vysvětlení mechanismu + co to znamená pro banku/CFO; klidně 3–4 věty na bod)
 
 ## Geopolitika
 - Události s přímým dopadem na finanční trhy nebo obchod
 - Sankce, obchodní politika, celní spory
 - Politická rizika v klíčových regionech (EU, USA, Čína, Blízký východ)
-(3–5 bodů)
+(3–5 bodů; ke každému: co se stalo + proč je to důležité + konkrétní finanční nebo obchodní dopad)
 
 ## Regulace & bankovnictví
 - Novinky z bankovní regulace (EBA, ECB SSM, Basel)
@@ -48,7 +50,7 @@ Struktura (dodržuj přesně):
 Tři věci, které by CFO neměl přehlédnout — s krátkým vysvětlením proč.
 
 ---
-Celkový rozsah: 700–900 slov. Dnešní datum: {date}.
+Celkový rozsah: 900–1200 slov. Dnešní datum: {date}.
 """
 
 RESEND_URL = "https://api.resend.com/emails"
