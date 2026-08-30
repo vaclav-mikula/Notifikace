@@ -2,10 +2,12 @@ name: CFO týdenní briefing
 
 on:
   schedule:
-    # Každé pondělí v 05:30 CET (04:30 UTC).
-    # V létě CEST = Praha+2h, takže email přijde v 6:30 CEST.
-    # V zimě CET = Praha+1h → přijde přesně v 5:30.
+    # 6:30 pražského času celoročně — GitHub cron nezná DST, proto dva záznamy:
+    # 04:30 UTC = 6:30 CEST (léto, UTC+2)
+    # 05:30 UTC = 6:30 CET  (zima, UTC+1)
+    # Skript sám zkontroluje pražský čas a pošle e-mail jen jednou.
     - cron: "30 4 * * 1"
+    - cron: "30 5 * * 1"
   workflow_dispatch: {}  # ruční spuštění pro testování
 
 jobs:
@@ -27,4 +29,5 @@ jobs:
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           FROM_EMAIL: ${{ secrets.FROM_EMAIL }}
           TO_EMAIL: ${{ secrets.TO_EMAIL }}
+          FORCE_SEND: ${{ github.event_name == 'workflow_dispatch' && '1' || '' }}
         run: python cfo-brief/brief.py

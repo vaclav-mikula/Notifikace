@@ -124,6 +124,12 @@ def send_email(html: str, date_str: str) -> None:
 
 
 if __name__ == "__main__":
+    from zoneinfo import ZoneInfo
+    now_prague = datetime.now(ZoneInfo("Europe/Prague"))
+    if now_prague.hour != 6 and "FORCE_SEND" not in os.environ:
+        print(f"Praha {now_prague.strftime('%H:%M')} — není 6:xx, přeskakuji.")
+        sys.exit(0)
+
     fmt = "%#d. %#m. %Y" if sys.platform == "win32" else "%-d. %-m. %Y"
     date_str = datetime.now().strftime(fmt)
 
