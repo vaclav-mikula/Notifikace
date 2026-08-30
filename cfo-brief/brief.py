@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 import requests
 import markdown
@@ -14,6 +15,7 @@ Jsi zkušený finanční analytik připravující týdenní briefing pro CFO mez
 Proto u každé ekonomické nebo geopolitické zprávy vždy vysvětli i kontext: co ta událost znamená, proč k ní došlo, a jaký má dopad na banku nebo finanční trhy. Nepředpokládej, že čtenář zná ekonomické mechanismy — raději je stručně vysvětli.
 Píšeš česky. Mezinárodní názvy institucí, firem a termíny ponecháš v originále (Fed, ECB, Basel III apod.).
 Buď konkrétní — uváděj čísla, procenta, názvy zemí a institucí. Vyhni se obecným frázím.
+DŮLEŽITÉ: Pro konkrétní čísla (úrokové sazby, kurzy, indexy) vždy uváděj pouze hodnoty, které jsi přímo dohledal přes vyhledávání. Nikdy si číslo nedomýšlej ani neodvozuj z paměti.
 """
 
 BRIEF_PROMPT = """\
@@ -56,11 +58,69 @@ Celkový rozsah: 900–1200 slov. Dnešní datum: {date}.
 RESEND_URL = "https://api.resend.com/emails"
 
 
+def fetch_verified_data() -> str:
+    """Fetch key financial figures from authoritative sources and return as prompt context."""
+    lines = []
+
+    # EUR/CZK a USD/CZK z ČNB API
+    try:
+        r = requests.get("https://api.cnb.cz/cnbapi/exrates/daily?lang=EN", timeout=10)
+        r.raise_for_status()
+        valid_for = ""
+        for item in r.json().get("rates", []):
+            if not valid_for:
+                valid_for = item.get("validFor", "")
+            if item["currencyCode"] in ("EUR", "USD"):
+                per_unit = item["rate"] / item["amount"]
+                lines.append(f"{item['currencyCode']}/CZK: {per_unit:.3f} (ČNB, {valid_for})")
+    except Exception as e:
+        print(f"ČNB kurzy: chyba ({e})")
+
+    # ČNB 2T repo sazba z webu ČNB
+    try:
+        r = requests.get(
+            "https://www.cnb.cz/en/monetary-policy/bank-board-decisions/",
+            timeout=10,
+            headers={"User-Agent": "Mozilla/5.0"},
+        )
+        r.raise_for_status()
+        m = re.search(r"2[-\s]week repo rate[^0-9]*(\d+[.,]\d+)\s*%", r.text, re.IGNORECASE)
+        if m:
+            lines.append(f"ČNB 2T repo sazba: {m.group(1).replace(',', '.')} % (ČNB)")
+    except Exception as e:
+        print(f"ČNB repo sazba: chyba ({e})")
+
+    # ECB deposit facility rate z ECB API
+    try:
+        r = requests.get(
+            "https://data-api.ecb.europa.eu/service/data/FM/B.U2.EUR.4F.KR.DFR.LEV"
+            "?lastNObservations=1&format=jsondata",
+            timeout=10,
+        )
+        r.raise_for_status()
+        obs = r.json()["dataSets"][0]["series"]["0:0:0:0:0:0:0"]["observations"]
+        val = list(obs.values())[-1][0]
+        lines.append(f"ECB deposit facility rate: {val} % (ECB)")
+    except Exception as e:
+        print(f"ECB sazba: chyba ({e})")
+
+    if not lines:
+        return ""
+    header = "Ověřená data přímo ze zdrojů — použij tato čísla přesně, nepřepisuj je:\n"
+    return header + "\n".join(f"- {l}" for l in lines)
+
+
 def generate_brief(date_str: str) -> str:
+    verified = fetch_verified_data()
+    if verified:
+        print(f"Ověřená data:\n{verified}\n")
+    prompt = BRIEF_PROMPT.format(date=date_str)
+    if verified:
+        prompt = verified + "\n\n" + prompt
     client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
     response = client.models.generate_content(
         model=MODEL,
-        contents=BRIEF_PROMPT.format(date=date_str),
+        contents=prompt,
         config=types.GenerateContentConfig(
             system_instruction=SYSTEM_PROMPT,
             tools=[types.Tool(google_search=types.GoogleSearch())],
