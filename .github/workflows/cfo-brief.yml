@@ -4,7 +4,12 @@ on:
   schedule:
     # Každé pondělí v 04:30 UTC = 6:30 CEST (léto) / 5:30 CET (zima).
     - cron: "30 4 * * 1"
-  workflow_dispatch: {}  # ruční spuštění pro testování
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Jen tisk do logu, e-mail neposílat"
+        type: boolean
+        default: false
 
 jobs:
   newsletter:
@@ -25,4 +30,5 @@ jobs:
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           FROM_EMAIL: ${{ secrets.FROM_EMAIL }}
           TO_EMAIL: ${{ secrets.TO_EMAIL }}
+          DRY_RUN: ${{ inputs.dry_run }}
         run: python cfo-brief/brief.py

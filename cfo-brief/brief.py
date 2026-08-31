@@ -197,4 +197,7 @@ if __name__ == "__main__":
     print("\n--- END ---\n")
 
     html = build_html(content, date_str)
-    send_email(html, date_str)
+    if os.environ.get("DRY_RUN", "").lower() in ("1", "true"):
+        print("DRY RUN — e-mail se neposílá.")
+    else:
+        send_email(html, date_str)
