@@ -61,14 +61,14 @@ def login(session: requests.Session, email: str, password: str) -> str:
 
 
 def extract_counts(html: str) -> tuple[int, int]:
-    """Vrátí (vsechny, doporucene). Confirmed = vsechny - doporucene."""
+    """Vrátí (vsechny, potvrzene) — obě čísla čtená přímo z textu stránky."""
     m_all = re.search(r"Všechny\s*\((\d+)\)", html)
-    m_rec = re.search(r"Doporučené\s*\((\d+)\)", html)
+    m_conf = re.search(r"Potvrzené\s*\((\d+)\)", html)
     if not m_all:
         sys.exit("CHYBA: nepodařilo se najít 'Všechny (N)' na stránce")
-    if not m_rec:
-        sys.exit("CHYBA: nepodařilo se najít 'Doporučené (N)' na stránce")
-    return int(m_all.group(1)), int(m_rec.group(1))
+    if not m_conf:
+        sys.exit("CHYBA: nepodařilo se najít 'Potvrzené (N)' na stránce")
+    return int(m_all.group(1)), int(m_conf.group(1))
 
 
 def load_state() -> dict:
@@ -110,9 +110,8 @@ def main() -> None:
     session.headers.update({"User-Agent": "Mozilla/5.0 (order-notifier)"})
 
     html = login(session, env("CUN_EMAIL"), env("CUN_PASSWORD"))
-    total, recommended = extract_counts(html)
-    confirmed = total - recommended
-    print(f"Všechny: {total}, Doporučené: {recommended}, Potvrzené: {confirmed}")
+    total, confirmed = extract_counts(html)
+    print(f"Všechny: {total}, Potvrzené: {confirmed}")
 
     state = load_state()
     last_total = state.get("total")
