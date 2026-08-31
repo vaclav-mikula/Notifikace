@@ -7,7 +7,7 @@ from google import genai
 from google.genai import types
 from datetime import datetime
 
-MODEL = "gemini-3.7-flash"  # nejnovější generace, zdarma přes Google AI Studio; pro víc kvality lze přejít na gemini-3.1-pro-preview (může chtít fakturaci)
+MODEL = "gemini-3.1-pro-preview"  # nejlepší dostupný Gemini Pro; ~$0.03-0.05/newsletter
 
 SYSTEM_PROMPT = """\
 Jsi zkušený finanční analytik připravující týdenní briefing pro CFO mezinárodní banky.
@@ -161,7 +161,7 @@ def build_html(content_md: str, date_str: str) -> str:
 <body>
 <h1>CFO Newsletter &mdash; {date_str}</h1>
 {body}
-<div class="footer">Generováno automaticky &middot; Gemini 3.7 Flash + Google Search &middot; {date_str}</div>
+<div class="footer">Generováno automaticky &middot; Gemini 3.1 Pro + Google Search &middot; {date_str}</div>
 </body>
 </html>"""
 
