@@ -1,17 +1,13 @@
-name: CFO týdenní briefing
+name: CFO Newsletter
 
 on:
   schedule:
-    # 6:30 pražského času celoročně — GitHub cron nezná DST, proto dva záznamy:
-    # 04:30 UTC = 6:30 CEST (léto, UTC+2)
-    # 05:30 UTC = 6:30 CET  (zima, UTC+1)
-    # Skript sám zkontroluje pražský čas a pošle e-mail jen jednou.
+    # Každé pondělí v 04:30 UTC = 6:30 CEST (léto) / 5:30 CET (zima).
     - cron: "30 4 * * 1"
-    - cron: "30 5 * * 1"
   workflow_dispatch: {}  # ruční spuštění pro testování
 
 jobs:
-  brief:
+  newsletter:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -23,11 +19,10 @@ jobs:
       - name: Instalace závislostí
         run: pip install -r cfo-brief/requirements.txt
 
-      - name: Generování a odeslání briefingu
+      - name: Generování a odeslání newsletteru
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           FROM_EMAIL: ${{ secrets.FROM_EMAIL }}
           TO_EMAIL: ${{ secrets.TO_EMAIL }}
-          FORCE_SEND: ${{ github.event_name == 'workflow_dispatch' && '1' || '' }}
         run: python cfo-brief/brief.py

@@ -159,7 +159,7 @@ def build_html(content_md: str, date_str: str) -> str:
 </style>
 </head>
 <body>
-<h1>CFO Týdenní briefing &mdash; {date_str}</h1>
+<h1>CFO Newsletter &mdash; {date_str}</h1>
 {body}
 <div class="footer">Generováno automaticky &middot; Gemini 3.7 Flash + Google Search &middot; {date_str}</div>
 </body>
@@ -176,7 +176,7 @@ def send_email(html: str, date_str: str) -> None:
         json={
             "from": os.environ["FROM_EMAIL"],
             "to": [os.environ["TO_EMAIL"]],
-            "subject": f"CFO Briefing — {date_str}",
+            "subject": f"CFO Newsletter — {date_str}",
             "html": html,
         },
         timeout=30,
@@ -186,12 +186,6 @@ def send_email(html: str, date_str: str) -> None:
 
 
 if __name__ == "__main__":
-    from zoneinfo import ZoneInfo
-    now_prague = datetime.now(ZoneInfo("Europe/Prague"))
-    if now_prague.hour != 6 and "FORCE_SEND" not in os.environ:
-        print(f"Praha {now_prague.strftime('%H:%M')} — není 6:xx, přeskakuji.")
-        sys.exit(0)
-
     fmt = "%#d. %#m. %Y" if sys.platform == "win32" else "%-d. %-m. %Y"
     date_str = datetime.now().strftime(fmt)
 
