@@ -1,4 +1,4 @@
-# Notifikace — hlídání nových objednávek na objednavky.cun.cz
+# Notifikace – hlídání nových objednávek na objednavky.cun.cz
 
 Každých 5 minut (přes GitHub Actions) se skript přihlásí na
 `objednavky.cun.cz`, načte seznam objednávek a porovná ho s uloženým
