@@ -122,6 +122,12 @@ def main() -> None:
         save_state(total, confirmed)
         return
 
+    if last_confirmed is None:
+        # Stav uložený starší verzí skriptu neobsahoval "confirmed".
+        # Doplníme ho bez notifikace, ať máme příště s čím porovnávat.
+        print("Chybí uložený počet potvrzených — doplňuji bez notifikace.")
+        last_confirmed = confirmed
+
     changed = False
 
     if total > last_total:
