@@ -123,8 +123,8 @@ odborné jsou **psané anglicky**:
 
 | Sekce | Jazyk | Obsah |
 |-------|-------|-------|
-| **Svět** | 🇨🇿 | Ekonomika, trhy a investice — sazby, komodity, výnosy dluhopisů, pohyby indexů a titulů; k tomu geopolitika. |
-| **Česko** | 🇨🇿 | ČNB, inflace, koruna, státní rozpočet, Dluhopisy Republiky, pražská burza a velké tuzemské firmy; k tomu politika. |
+| **Svět** | 🇨🇿 | Všechno důležité včetně politiky a geopolitiky; zhruba dvě třetiny na ekonomiku, trhy a investice (sazby, komodity, výnosy, pohyby indexů a titulů). |
+| **Česko** | 🇨🇿 | Všechno důležité včetně čistě politických zpráv; zhruba dvě třetiny na ekonomiku (ČNB, inflace, rozpočet, Dluhopisy Republiky, pražská burza, velké firmy). |
 | **AI & Data engineering** | 🇬🇧 | Modely, datové platformy, regulace AI, investice a akvizice. |
 | **SAP** | 🇬🇧 | Hlavně datová a AI platforma (BDC, Datasphere, Joule, BTP), okrajově SAP z pohledu investora. |
 | **Na co si dát pozor příští týden** | 🇨🇿 | Tři nadcházející události — zasedání, data, výsledky, aukce. |

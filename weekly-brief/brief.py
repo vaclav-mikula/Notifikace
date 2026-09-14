@@ -26,8 +26,9 @@ Zásady:
   „trhy byly volatilní" bez vysvětlení proč.
 - U každé zprávy nestačí popsat, CO se stalo — vysvětli i PROČ je to důležité
   a co z toho plyne. Čtenář buduje přehled, nepředpokládej znalost mechanismů.
-- Čtenář aktivně investuje, takže u ekonomických zpráv zmiň dopad na investora,
-  pokud nějaký je — kam se hnuly výnosy, kurzy, konkrétní tituly.
+- Čtenář aktivně investuje, takže u ekonomických zpráv zmiň dopad na investora
+  — kam se hnuly výnosy, kurzy, konkrétní tituly. U politických a společenských
+  zpráv investiční úhel nevynucuj; pokud tam žádný není, prostě ho neuváděj.
 - Nepiš o věcech, které se za sledované období nestaly. Raději méně bodů
   než vata.
 
@@ -47,18 +48,23 @@ tvoje tréninková data končí dřív, než toto období začalo.
 Pak napiš newsletter přesně v této struktuře:
 
 ## Svět
-(ČESKY) Nejdůležitější dění ve světě. Těžiště na ekonomice, trzích a investicích:
-centrální banky, inflace, růst, komodity, měny, výnosy dluhopisů, výrazné pohyby
-akciových indexů i jednotlivých titulů (a proč se hnuly), velké firemní události,
-IPO a akvizice. Ne výhradně — zahrň i významnou geopolitiku, volby nebo události,
-které trhy či obchod ovlivní. (5–6 bodů, ke každému 2–4 věty.)
+(ČESKY) Nejdůležitější dění ve světě — zkrátka to, co by čtenář neměl minout.
+Vybírej podle skutečné důležitosti události, ne podle toho, do jaké škatulky
+spadá: patří sem politika, geopolitika, volby, konflikty i velké společenské
+události stejně jako ekonomika.
+Zhruba dvě třetiny bodů ale věnuj ekonomice, trhům a investicím: centrální banky,
+inflace, růst, komodity, měny, výnosy dluhopisů, výrazné pohyby akciových indexů
+i jednotlivých titulů (a proč se hnuly), velké firemní události, IPO a akvizice.
+(5–6 bodů, ke každému 2–4 věty.)
 
 ## Česko
-(ČESKY) Nejdůležitější dění v ČR. Těžiště na ekonomice a investicích: ČNB a sazby,
-inflace, koruna, HDP, mzdy, trh práce, energie, návrh a schvalování státního
-rozpočtu, emise Dluhopisů Republiky a výnosy státních dluhopisů, dění na pražské
-burze a velké tuzemské firmy (ČEZ, Komerční banka, Erste, Kofola a spol.).
-Ne výhradně — zahrň i politiku a regulaci s ekonomickým dopadem.
+(ČESKY) Nejdůležitější dění v ČR — zkrátka to, co by čtenář neměl minout.
+Patří sem i čistě politické zprávy (vláda, sněmovna, volby, velké kauzy
+a personální změny) bez ohledu na to, jestli mají přímý dopad na trhy.
+Zhruba dvě třetiny bodů ale věnuj ekonomice a investicím: ČNB a sazby, inflace,
+koruna, HDP, mzdy, trh práce, energie, návrh a schvalování státního rozpočtu,
+emise Dluhopisů Republiky a výnosy státních dluhopisů, dění na pražské burze
+a velké tuzemské firmy (ČEZ, Komerční banka, Erste, Kofola a spol.).
 (4–5 bodů, ke každému 2–4 věty.)
 
 ## AI & Data engineering
