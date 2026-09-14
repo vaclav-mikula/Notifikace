@@ -1,9 +1,10 @@
 # Notifikace – hlídání objednávek na objednavky.cun.cz
 
-Repozitář obsahuje dvě nezávislé automatizace běžící přes GitHub Actions:
+Repozitář obsahuje tři nezávislé automatizace běžící přes GitHub Actions:
 
 1. **Kontrola objednávek** – každých 5 minut hlídá počet objednávek a posílá e-mail při změně.
 2. **CFO Newsletter** – každé pondělí generuje týdenní finanční briefing a posílá ho e-mailem.
+3. **Weekly Newsletter** – každou sobotu shrne dění ve světě, v ČR, v AI/data engineeringu a v SAP.
 
 ---
 
@@ -107,4 +108,51 @@ je do promptu s instrukcí, aby je model použil přesně.
 
 V záložce **Actions** → *CFO Newsletter* → **Run workflow**.
 Zaškrtnutím **„Jen tisk do logu, e-mail neposílat"** se briefing pouze vypíše
+do logu (`DRY_RUN`) a e-mail se neodešle.
+
+---
+
+## 3. Weekly Newsletter
+
+Každou sobotu ve 04:17 UTC (5:17 zimního / 6:17 letního pražského času) se
+vygeneruje česky psaný týdenní newsletter a pošle se e-mailem jako HTML.
+
+Používá stejné technické řešení jako CFO Newsletter (Gemini + Google Search,
+odeslání přes Resend), liší se obsahem — pokrývá čtyři oblasti:
+
+- **Svět** – těžiště na ekonomice a trzích, ale i geopolitika a velké události.
+- **Česko** – těžiště na ekonomice (ČNB, inflace, koruna, rozpočet), i politika.
+- **AI & Data engineering** – modely, datové platformy, regulace, investice.
+- **SAP** – hlavně datová a AI platforma (BDC, Datasphere, Joule, BTP),
+  okrajově SAP jako firma z pohledu investora.
+- **Na co si dát pozor příští týden** – tři nadcházející události.
+
+Rozsah je zhruba 1000 slov.
+
+### Jak to funguje
+
+- [`weekly-brief/brief.py`](weekly-brief/brief.py) — generování přes Gemini s Google Search,
+  sestavení HTML, odeslání přes Resend.
+- [`.github/workflows/weekly-newsletter.yml`](.github/workflows/weekly-newsletter.yml) — týdenní spouštění.
+
+Model si aktuální dění dohledává sám přes **Google Search**. Systémový prompt mu
+zakazuje uvádět jakékoli číslo, které si přímo nedohledal — raději zprávu bez
+čísla než vymyšlený údaj.
+
+### Nastavení (GitHub Secrets)
+
+Všechny čtyři secrets jsou **sdílené s CFO Newsletterem** — pokud ten už běží,
+není potřeba nastavovat nic nového.
+
+| Secret | Popis |
+|--------|-------|
+| `GEMINI_API_KEY` | API klíč pro Google Gemini |
+| `RESEND_API_KEY` | API klíč pro [Resend](https://resend.com) |
+| `FROM_EMAIL` | odesílatel (ověřená doména v Resend) |
+| `TO_EMAIL` | příjemce newsletteru |
+
+### Ruční spuštění / test
+
+V záložce **Actions** → *Weekly Newsletter* → **Run workflow**.
+Zaškrtnutím **„Jen tisk do logu, e-mail neposílat"** se newsletter pouze vypíše
 do logu (`DRY_RUN`) a e-mail se neodešle.
