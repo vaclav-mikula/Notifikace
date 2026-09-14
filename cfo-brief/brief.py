@@ -166,7 +166,20 @@ def build_html(content_md: str, date_str: str) -> str:
 </html>"""
 
 
+def mask_email(addr: str) -> str:
+    """Zamaskuje lokální část adresy, aby log neprozradil celý e-mail."""
+    local, _, domain = addr.partition("@")
+    if not domain:
+        return "***"
+    shown = local[:2] if len(local) > 2 else local[:1]
+    return f"{shown}***@{domain}"
+
+
 def send_email(html: str, date_str: str) -> None:
+    from_email = os.environ["FROM_EMAIL"]
+    to_email = os.environ["TO_EMAIL"]
+    print(f"Odesílám z {mask_email(from_email)} na {mask_email(to_email)}...")
+
     resp = requests.post(
         RESEND_URL,
         headers={
@@ -174,14 +187,19 @@ def send_email(html: str, date_str: str) -> None:
             "Content-Type": "application/json",
         },
         json={
-            "from": os.environ["FROM_EMAIL"],
-            "to": [os.environ["TO_EMAIL"]],
+            "from": from_email,
+            "to": [to_email],
             "subject": f"CFO Newsletter — {date_str}",
             "html": html,
         },
         timeout=30,
     )
-    resp.raise_for_status()
+
+    if not resp.ok:
+        # Resend vrací důvod odmítnutí v těle odpovědi — raise_for_status() ho zahodí.
+        print(f"Resend odmítl požadavek (HTTP {resp.status_code}): {resp.text}")
+        resp.raise_for_status()
+
     print(f"Email sent: {resp.json().get('id')}")
 
 
