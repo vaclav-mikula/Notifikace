@@ -115,19 +115,21 @@ do logu (`DRY_RUN`) a e-mail se neodešle.
 ## 3. Weekly Newsletter
 
 Každou sobotu ve 04:17 UTC (5:17 zimního / 6:17 letního pražského času) se
-vygeneruje česky psaný týdenní newsletter a pošle se e-mailem jako HTML.
+vygeneruje týdenní newsletter a pošle se e-mailem jako HTML.
 
 Používá stejné technické řešení jako CFO Newsletter (Gemini + Google Search,
-odeslání přes Resend), liší se obsahem — pokrývá čtyři oblasti:
+odeslání přes Resend), liší se obsahem — pokrývá pět sekcí, z toho dvě
+odborné jsou **psané anglicky**:
 
-- **Svět** – těžiště na ekonomice a trzích, ale i geopolitika a velké události.
-- **Česko** – těžiště na ekonomice (ČNB, inflace, koruna, rozpočet), i politika.
-- **AI & Data engineering** – modely, datové platformy, regulace, investice.
-- **SAP** – hlavně datová a AI platforma (BDC, Datasphere, Joule, BTP),
-  okrajově SAP jako firma z pohledu investora.
-- **Na co si dát pozor příští týden** – tři nadcházející události.
+| Sekce | Jazyk | Obsah |
+|-------|-------|-------|
+| **Svět** | 🇨🇿 | Ekonomika, trhy a investice — sazby, komodity, výnosy dluhopisů, pohyby indexů a titulů; k tomu geopolitika. |
+| **Česko** | 🇨🇿 | ČNB, inflace, koruna, státní rozpočet, Dluhopisy Republiky, pražská burza a velké tuzemské firmy; k tomu politika. |
+| **AI & Data engineering** | 🇬🇧 | Modely, datové platformy, regulace AI, investice a akvizice. |
+| **SAP** | 🇬🇧 | Hlavně datová a AI platforma (BDC, Datasphere, Joule, BTP), okrajově SAP z pohledu investora. |
+| **Na co si dát pozor příští týden** | 🇨🇿 | Tři nadcházející události — zasedání, data, výsledky, aukce. |
 
-Rozsah je zhruba 1000 slov.
+Rozsah je zhruba 1000 slov, těžiště na českých sekcích Svět a Česko.
 
 ### Jak to funguje
 

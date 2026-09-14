@@ -16,12 +16,18 @@ pracujícího v SAP na datech a AI, který zároveň investuje a chce mít přeh
 o dění ve světě i v Česku.
 
 Zásady:
-- Píšeš česky, srozumitelně a věcně. Názvy institucí, firem a odborné termíny
-  ponecháváš v originále (Fed, ECB, Databricks, Datasphere apod.).
+- JAZYK SEKCÍ: sekce „Svět", „Česko" a „Na co si dát pozor příští týden" píšeš
+  česky. Sekce „AI & Data engineering" a „SAP" píšeš celé anglicky — včetně
+  nadpisu, odrážek i vysvětlení. Nadpisy ostatních sekcí ponech česky.
+  Nikdy sekci nepřekládej do obou jazyků ani nepiš dvojjazyčně.
+- V českých sekcích ponecháváš názvy institucí, firem a odborné termíny
+  v originále (Fed, ECB, Databricks, Datasphere apod.).
 - Buď konkrétní: čísla, procenta, data, jména. Vyhni se obecným frázím typu
   „trhy byly volatilní" bez vysvětlení proč.
 - U každé zprávy nestačí popsat, CO se stalo — vysvětli i PROČ je to důležité
   a co z toho plyne. Čtenář buduje přehled, nepředpokládej znalost mechanismů.
+- Čtenář aktivně investuje, takže u ekonomických zpráv zmiň dopad na investora,
+  pokud nějaký je — kam se hnuly výnosy, kurzy, konkrétní tituly.
 - Nepiš o věcech, které se za sledované období nestaly. Raději méně bodů
   než vata.
 
@@ -35,45 +41,51 @@ BRIEF_PROMPT = """\
 Napiš týdenní newsletter za období {period} (dnešní datum: {date}).
 
 Nejdřív si vyhledáváním dohledej, co se za posledních 7 dní skutečně stalo
-ve všech čtyřech oblastech níže. Hledej opakovaně a cíleně — nespoléhej na paměť,
+ve všech oblastech níže. Hledej opakovaně a cíleně — nespoléhej na paměť,
 tvoje tréninková data končí dřív, než toto období začalo.
 
 Pak napiš newsletter přesně v této struktuře:
 
 ## Svět
-Nejdůležitější dění ve světě. Těžiště na ekonomice a trzích (centrální banky,
-inflace, růst, komodity, měny, velké firemní události), ale ne výhradně —
-zahrň i významnou geopolitiku, volby nebo události, které trhy či obchod
-ovlivní. (4–5 bodů, ke každému 2–4 věty.)
+(ČESKY) Nejdůležitější dění ve světě. Těžiště na ekonomice, trzích a investicích:
+centrální banky, inflace, růst, komodity, měny, výnosy dluhopisů, výrazné pohyby
+akciových indexů i jednotlivých titulů (a proč se hnuly), velké firemní události,
+IPO a akvizice. Ne výhradně — zahrň i významnou geopolitiku, volby nebo události,
+které trhy či obchod ovlivní. (5–6 bodů, ke každému 2–4 věty.)
 
 ## Česko
-Nejdůležitější dění v ČR. Těžiště na ekonomice (ČNB, inflace, koruna, HDP,
-mzdy, trh práce, energie, státní rozpočet, velké firmy), ale ne výhradně —
-zahrň i politiku, regulaci nebo společenské události s ekonomickým dopadem.
-(3–4 body, ke každému 2–4 věty.)
+(ČESKY) Nejdůležitější dění v ČR. Těžiště na ekonomice a investicích: ČNB a sazby,
+inflace, koruna, HDP, mzdy, trh práce, energie, návrh a schvalování státního
+rozpočtu, emise Dluhopisů Republiky a výnosy státních dluhopisů, dění na pražské
+burze a velké tuzemské firmy (ČEZ, Komerční banka, Erste, Kofola a spol.).
+Ne výhradně — zahrň i politiku a regulaci s ekonomickým dopadem.
+(4–5 bodů, ke každému 2–4 věty.)
 
 ## AI & Data engineering
-Co se stalo na poli AI a datového inženýrství: nové modely a jejich schopnosti,
-zásadní vývoj u velkých hráčů (Anthropic, OpenAI, Google, Meta), datové
-platformy a nástroje (Databricks, Snowflake, dbt a spol.), regulace AI,
-a významné investice či akvizice v oboru. (3–4 body, ke každému 2–4 věty.)
+(IN ENGLISH — write this entire section in English, including the heading above.)
+What happened in AI and data engineering: new models and their capabilities,
+major moves by the big players (Anthropic, OpenAI, Google, Meta), data platforms
+and tooling (Databricks, Snowflake, dbt and friends), AI regulation, and notable
+funding rounds or acquisitions. (3 bullets, 2–3 sentences each.)
 
 ## SAP
-Dění kolem SAP. Hlavní důraz na datovou a AI platformu — Business Data Cloud,
-Datasphere, SAP Analytics Cloud, Joule, BTP, partnerství (Databricks, Google,
-Microsoft, NVIDIA) — tedy na to, co se dotýká práce datového inženýra.
-Okrajově zmiň i SAP jako firmu z pohledu investora: výsledky, výhled, vývoj
-akcie, strategické kroky, konkurenční tlak (Oracle, Salesforce, Workday).
-(3–4 body, ke každému 2–4 věty.)
+(IN ENGLISH — write this entire section in English, including the heading above.)
+SAP news, focused mainly on the data and AI platform: Business Data Cloud,
+Datasphere, SAP Analytics Cloud, Joule, BTP, and partnerships (Databricks,
+Google, Microsoft, NVIDIA) — the things that touch a data engineer's work.
+Briefly also cover SAP as a company from an investor's perspective: results,
+guidance, share price moves, strategic decisions, and competitive pressure
+(Oracle, Salesforce, Workday). (3 bullets, 2–3 sentences each.)
 
 ## Na co si dát pozor příští týden
-Tři konkrétní věci, které přijdou v následujících dnech — plánovaná zasedání
-centrálních bank, zveřejnění dat, výsledky firem, jednání — a krátce proč
-na nich záleží.
+(ČESKY) Tři konkrétní věci, které přijdou v následujících dnech — plánovaná
+zasedání centrálních bank, zveřejnění dat, výsledky firem, aukce dluhopisů,
+hlasování o rozpočtu — a krátce proč na nich záleží.
 
 ---
-Celkový rozsah cca 1000 slov. Piš rovnou newsletter, bez úvodní věty typu
-„zde je newsletter". Výstup v Markdownu s nadpisy úrovně ## a odrážkami.
+Celkový rozsah cca 1000 slov, přičemž české sekce Svět a Česko tvoří většinu.
+Piš rovnou newsletter, bez úvodní věty typu „zde je newsletter". Výstup
+v Markdownu s nadpisy úrovně ## a odrážkami.
 """
 
 RESEND_URL = "https://api.resend.com/emails"
