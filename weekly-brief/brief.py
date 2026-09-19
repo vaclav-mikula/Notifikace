@@ -16,10 +16,10 @@ pracujícího v SAP na datech a AI, který zároveň investuje a chce mít přeh
 o dění ve světě i v Česku.
 
 Zásady:
-- JAZYK SEKCÍ: sekce „Svět", „Česko" a „Na co si dát pozor příští týden" píšeš
-  česky. Sekce „AI & Data engineering" a „SAP" píšeš celé anglicky — včetně
-  nadpisu, odrážek i vysvětlení. Nadpisy ostatních sekcí ponech česky.
-  Nikdy sekci nepřekládej do obou jazyků ani nepiš dvojjazyčně.
+- JAZYK SEKCÍ: sekce „Svět", „Česko", „Na co si dát pozor příští týden"
+  a „Lego v ČR" píšeš česky. Sekce „AI & Data engineering" a „SAP" píšeš celé
+  anglicky — včetně nadpisu, odrážek i vysvětlení. Nadpisy ostatních sekcí
+  ponech česky. Nikdy sekci nepřekládej do obou jazyků ani nepiš dvojjazyčně.
 - V českých sekcích ponecháváš názvy institucí, firem a odborné termíny
   v originále (Fed, ECB, Databricks, Datasphere apod.).
 - Buď konkrétní: čísla, procenta, data, jména. Vyhni se obecným frázím typu
@@ -44,7 +44,8 @@ Zásady:
   nestalo, ani rozmělněním jedné zprávy do několika bodů.
 - Pokud se v některé oblasti za celý týden nestalo nic, co by laťku splnilo,
   napiš do sekce jedinou větu, že se tento týden nic zásadního neodehrálo,
-  a pokračuj další sekcí. To je v pořádku a lepší než vata.
+  a pokračuj další sekcí. To je v pořádku a lepší než vata. (Výjimkou je
+  sekce „Lego v ČR" — ta se při prázdném výsledku vynechává celá, viz zadání.)
 - Nepiš o věcech, které se za sledované období nestaly.
 
 KRITICKÉ PRAVIDLO O ČÍSLECH: Každé konkrétní číslo (sazba, kurz, index, tržba,
@@ -59,9 +60,13 @@ Napiš týdenní newsletter za období {period} (dnešní datum: {date}).
 Nejdřív si vyhledáváním dohledej, co se za posledních 7 dní skutečně stalo
 ve všech oblastech níže. Hledej opakovaně a cíleně — nespoléhej na paměť,
 tvoje tréninková data končí dřív, než toto období začalo.
+U posledních dvou sekcí hledáš naopak dopředu: nadcházející události
+v následujících dnech, resp. u Lega v následujících 14 dnech.
 
 Pak napiš newsletter v této struktuře — dodrž pořadí sekcí, jejich nadpisy
-a jazyk. Počty bodů uvedené u sekcí jsou ale stropy, ne kvóty k naplnění:
+a jazyk. Počty bodů uvedené u sekcí jsou ale stropy, ne kvóty k naplnění.
+Jediná sekce, která se smí (a při prázdném výsledku má) vypustit celá,
+je závěrečná „Lego v ČR":
 
 ## Svět
 (ČESKY) Nejdůležitější dění ve světě — zkrátka to, co by čtenář neměl minout.
@@ -113,11 +118,29 @@ plánovaná zasedání centrálních bank, zveřejnění dat, výsledky firem, a
 dluhopisů, hlasování o rozpočtu — a krátce proč na nich záleží. Uveď jen ty,
 kde na výsledku opravdu záleží; když je klidný týden, stačí jedna nebo dvě.
 
+## Lego v ČR
+(ČESKY) Tuto sekci piš POUZE tehdy, pokud jsi vyhledáváním skutečně našel
+konkrétní akci související s Legem, která se koná v České republice
+v následujících 14 dnech: výstava, srazy fanoušků a sběratelů, otevření
+nové prodejny, soutěž ve stavění, speciální akce v Legolandu či muzeu,
+uvedení významné novinky na trh apod.
+
+Ke každé akci uveď název, místo, datum a jednu větu, o co jde. (Nejvýše
+3 akce.)
+
+DŮLEŽITÉ: Pokud nic takového nenajdeš — což bude nejčastější případ —
+vynech celou tuto sekci včetně nadpisu. Nepiš, že se nic nekoná, nepiš
+prázdnou sekci ani obecné odkazy na Lego obchody. Raději žádná sekce než
+vymyšlená nebo nekonkrétní akce. Nikdy si akci nevymýšlej a neuváděj akce
+ze zahraničí ani ty, které už proběhly.
+
 ---
 Rozsah je nejvýše cca 1000 slov, přičemž české sekce Svět a Česko tvoří
 většinu. Není to ale cíl, kterého je třeba dosáhnout — je to strop.
 V týdnu, kdy se toho moc nestalo, je 500 slov naprosto v pořádku.
 Kratší a hutný newsletter je vždy lepší než natažený.
+Sekce „Lego v ČR" se do tohoto limitu nepočítá — je mimo, a její délka
+tedy nesmí ovlivnit rozsah ostatních sekcí.
 
 Piš rovnou newsletter, bez úvodní věty typu „zde je newsletter". Výstup
 v Markdownu s nadpisy úrovně ## a odrážkami.

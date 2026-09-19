@@ -118,8 +118,8 @@ Každou sobotu ve 04:17 UTC (5:17 zimního / 6:17 letního pražského času) se
 vygeneruje týdenní newsletter a pošle se e-mailem jako HTML.
 
 Používá stejné technické řešení jako CFO Newsletter (Gemini + Google Search,
-odeslání přes Resend), liší se obsahem — pokrývá pět sekcí, z toho dvě
-odborné jsou **psané anglicky**:
+odeslání přes Resend), liší se obsahem — pokrývá pět stálých sekcí, z toho dvě
+odborné jsou **psané anglicky**, plus jednu nepravidelnou:
 
 | Sekce | Jazyk | Obsah |
 |-------|-------|-------|
@@ -128,6 +128,7 @@ odborné jsou **psané anglicky**:
 | **AI & Data engineering** | 🇬🇧 | Modely, datové platformy, regulace AI, investice a akvizice. |
 | **SAP** | 🇬🇧 | Hlavně datová a AI platforma (BDC, Datasphere, Joule, BTP), okrajově SAP z pohledu investora. |
 | **Na co si dát pozor příští týden** | 🇨🇿 | Až tři nadcházející události — zasedání, data, výsledky, aukce. |
+| **Lego v ČR** | 🇨🇿 | Akce související s Legem v ČR v následujících 14 dnech. Objeví se jen když se něco najde — jinak se sekce vynechá celá. Nepočítá se do limitu slov. |
 
 Rozsah je **nejvýše** zhruba 1000 slov, těžiště na českých sekcích Svět a Česko.
 
