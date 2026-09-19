@@ -29,8 +29,23 @@ Zásady:
 - Čtenář aktivně investuje, takže u ekonomických zpráv zmiň dopad na investora
   — kam se hnuly výnosy, kurzy, konkrétní tituly. U politických a společenských
   zpráv investiční úhel nevynucuj; pokud tam žádný není, prostě ho neuváděj.
-- Nepiš o věcech, které se za sledované období nestaly. Raději méně bodů
-  než vata.
+- LAŤKA VÝZNAMNOSTI: zajímají nás jen velké věci, které rezonují déle než
+  pár dní — ne rutinní provoz. Ptej se u každého bodu: bude to za měsíc
+  ještě někoho zajímat? Když ne, vynech ho.
+  Do newsletteru tedy nepatří: běžná týdenní data bez překvapení, obvyklé
+  kolísání kurzů a indexů, plánovaná zasedání, která dopadla podle očekávání,
+  ani produktové drobnosti a inkrementální aktualizace.
+  Patří tam: zlomy a překvapení, změny trendu, velké schodky a rozpočty,
+  zásadní politická rozhodnutí, velké akvizice, nové modely a technologie,
+  které mění zavedený stav.
+- POČTY BODŮ JSOU STROPY, NE CÍLE. Uvedená rozmezí u sekcí jsou maxima.
+  Když se za týden stalo málo, napiš klidně jen dva body — nebo u odborných
+  sekcí jediný. Nikdy nedoplňuj počet vatou, převyprávěním toho, co se
+  nestalo, ani rozmělněním jedné zprávy do několika bodů.
+- Pokud se v některé oblasti za celý týden nestalo nic, co by laťku splnilo,
+  napiš do sekce jedinou větu, že se tento týden nic zásadního neodehrálo,
+  a pokračuj další sekcí. To je v pořádku a lepší než vata.
+- Nepiš o věcech, které se za sledované období nestaly.
 
 KRITICKÉ PRAVIDLO O ČÍSLECH: Každé konkrétní číslo (sazba, kurz, index, tržba,
 procento) smíš uvést pouze tehdy, pokud jsi ho přímo dohledal vyhledáváním.
@@ -45,7 +60,8 @@ Nejdřív si vyhledáváním dohledej, co se za posledních 7 dní skutečně st
 ve všech oblastech níže. Hledej opakovaně a cíleně — nespoléhej na paměť,
 tvoje tréninková data končí dřív, než toto období začalo.
 
-Pak napiš newsletter přesně v této struktuře:
+Pak napiš newsletter v této struktuře — dodrž pořadí sekcí, jejich nadpisy
+a jazyk. Počty bodů uvedené u sekcí jsou ale stropy, ne kvóty k naplnění:
 
 ## Svět
 (ČESKY) Nejdůležitější dění ve světě — zkrátka to, co by čtenář neměl minout.
@@ -55,7 +71,8 @@ události stejně jako ekonomika.
 Zhruba dvě třetiny bodů ale věnuj ekonomice, trhům a investicím: centrální banky,
 inflace, růst, komodity, měny, výnosy dluhopisů, výrazné pohyby akciových indexů
 i jednotlivých titulů (a proč se hnuly), velké firemní události, IPO a akvizice.
-(5–6 bodů, ke každému 2–4 věty.)
+(Nejvýše 6 bodů, ke každému 2–4 věty. Ve slabším týdnu výrazně méně —
+raději menší rozsah než vata.)
 
 ## Česko
 (ČESKY) Nejdůležitější dění v ČR — zkrátka to, co by čtenář neměl minout.
@@ -65,14 +82,18 @@ Zhruba dvě třetiny bodů ale věnuj ekonomice a investicím: ČNB a sazby, inf
 koruna, HDP, mzdy, trh práce, energie, návrh a schvalování státního rozpočtu,
 emise Dluhopisů Republiky a výnosy státních dluhopisů, dění na pražské burze
 a velké tuzemské firmy (ČEZ, Komerční banka, Erste, Kofola a spol.).
-(4–5 bodů, ke každému 2–4 věty.)
+(Nejvýše 5 bodů, ke každému 2–4 věty. Ve slabším týdnu výrazně méně —
+raději menší rozsah než vata.)
 
 ## AI & Data engineering
 (IN ENGLISH — write this entire section in English, including the heading above.)
 What happened in AI and data engineering: new models and their capabilities,
 major moves by the big players (Anthropic, OpenAI, Google, Meta), data platforms
 and tooling (Databricks, Snowflake, dbt and friends), AI regulation, and notable
-funding rounds or acquisitions. (3 bullets, 2–3 sentences each.)
+funding rounds or acquisitions. Only genuinely significant developments —
+skip incremental updates and minor product tweaks.
+(At most 3 bullets, 2–3 sentences each. Noticeably fewer in a quiet week —
+a shorter section beats filler.)
 
 ## SAP
 (IN ENGLISH — write this entire section in English, including the heading above.)
@@ -81,15 +102,23 @@ Datasphere, SAP Analytics Cloud, Joule, BTP, and partnerships (Databricks,
 Google, Microsoft, NVIDIA) — the things that touch a data engineer's work.
 Briefly also cover SAP as a company from an investor's perspective: results,
 guidance, share price moves, strategic decisions, and competitive pressure
-(Oracle, Salesforce, Workday). (3 bullets, 2–3 sentences each.)
+(Oracle, Salesforce, Workday). Only what actually matters — skip routine
+release notes and minor feature announcements.
+(At most 3 bullets, 2–3 sentences each. Noticeably fewer in a quiet week —
+a shorter section beats filler.)
 
 ## Na co si dát pozor příští týden
-(ČESKY) Tři konkrétní věci, které přijdou v následujících dnech — plánovaná
-zasedání centrálních bank, zveřejnění dat, výsledky firem, aukce dluhopisů,
-hlasování o rozpočtu — a krátce proč na nich záleží.
+(ČESKY) Nejvýše tři konkrétní věci, které přijdou v následujících dnech —
+plánovaná zasedání centrálních bank, zveřejnění dat, výsledky firem, aukce
+dluhopisů, hlasování o rozpočtu — a krátce proč na nich záleží. Uveď jen ty,
+kde na výsledku opravdu záleží; když je klidný týden, stačí jedna nebo dvě.
 
 ---
-Celkový rozsah cca 1000 slov, přičemž české sekce Svět a Česko tvoří většinu.
+Rozsah je nejvýše cca 1000 slov, přičemž české sekce Svět a Česko tvoří
+většinu. Není to ale cíl, kterého je třeba dosáhnout — je to strop.
+V týdnu, kdy se toho moc nestalo, je 500 slov naprosto v pořádku.
+Kratší a hutný newsletter je vždy lepší než natažený.
+
 Piš rovnou newsletter, bez úvodní věty typu „zde je newsletter". Výstup
 v Markdownu s nadpisy úrovně ## a odrážkami.
 """

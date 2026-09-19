@@ -127,9 +127,15 @@ odborné jsou **psané anglicky**:
 | **Česko** | 🇨🇿 | Všechno důležité včetně čistě politických zpráv; zhruba dvě třetiny na ekonomiku (ČNB, inflace, rozpočet, Dluhopisy Republiky, pražská burza, velké firmy). |
 | **AI & Data engineering** | 🇬🇧 | Modely, datové platformy, regulace AI, investice a akvizice. |
 | **SAP** | 🇬🇧 | Hlavně datová a AI platforma (BDC, Datasphere, Joule, BTP), okrajově SAP z pohledu investora. |
-| **Na co si dát pozor příští týden** | 🇨🇿 | Tři nadcházející události — zasedání, data, výsledky, aukce. |
+| **Na co si dát pozor příští týden** | 🇨🇿 | Až tři nadcházející události — zasedání, data, výsledky, aukce. |
 
-Rozsah je zhruba 1000 slov, těžiště na českých sekcích Svět a Česko.
+Rozsah je **nejvýše** zhruba 1000 slov, těžiště na českých sekcích Svět a Česko.
+
+Tisíc slov je strop, ne cíl. Prompt drží laťku významnosti — do newsletteru
+patří jen velké věci, které rezonují déle než pár dní, ne rutinní provoz.
+Počty bodů u sekcí jsou maxima, takže ve slabém týdnu přijde kratší newsletter
+(klidně 500 slov) a sekce, kde se nic zásadního nestalo, se odbude jednou větou.
+Raději menší rozsah než vata.
 
 ### Jak to funguje
 
