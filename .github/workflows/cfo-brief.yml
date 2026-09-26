@@ -2,8 +2,8 @@ name: CFO Newsletter
 
 on:
   schedule:
-    # Každé pondělí v 01:00 GMT/UTC (bez ohledu na letní/zimní čas), aby byl brief hotový už v noci.
-    - cron: "0 1 * * 1"
+    # Každé pondělí v 0:47 GMT/UTC (bez ohledu na letní/zimní čas), aby byl brief hotový už v noci.
+    - cron: "47 0 * * 1"
   workflow_dispatch:
     inputs:
       dry_run:
