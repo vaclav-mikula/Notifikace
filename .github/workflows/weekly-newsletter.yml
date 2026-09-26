@@ -2,8 +2,8 @@ name: Weekly Newsletter
 
 on:
   schedule:
-    # Každou sobotu ve 04:17 UTC = 5:17 CET (zima) / 6:17 CEST (léto).
-    - cron: "17 4 * * 6"
+    # Každý pátek v 15:17 GMT/UTC (bez ohledu na letní/zimní čas), odpolední doručení.
+    - cron: "17 15 * * 5"
   workflow_dispatch:
     inputs:
       dry_run:
