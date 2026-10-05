@@ -1,8 +1,11 @@
 name: CFO Newsletter
+run-name: ${{ inputs.dry_run && 'CFO Newsletter (dry-run)' || 'CFO Newsletter' }}
 
 on:
+  # Hlavní spouštěč je externí (cron-job.org → workflow_dispatch, viz README),
+  # protože GitHub plánovač běhy v pondělí ráno zpožďuje i o 5+ hodin.
+  # Tenhle cron je jen záloha; pojistka níže zajistí, že e-mail odejde jednou týdně.
   schedule:
-    # Každé pondělí v 0:47 GMT/UTC (bez ohledu na letní/zimní čas), aby byl brief hotový už v noci.
     - cron: "47 0 * * 1"
   workflow_dispatch:
     inputs:
@@ -10,21 +13,52 @@ on:
         description: "Jen tisk do logu, e-mail neposílat"
         type: boolean
         default: false
+      force:
+        description: "Poslat i když už tento týden odešel"
+        type: boolean
+        default: false
+
+# Externí spouštěč a záložní cron se mohou sejít — druhý běh počká a pak se přeskočí.
+concurrency:
+  group: cfo-brief
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  actions: read
 
 jobs:
   newsletter:
     runs-on: ubuntu-latest
     steps:
+      - name: Kontrola, zda už tento týden odešel
+        id: guard
+        if: ${{ !inputs.dry_run && !inputs.force }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          monday=$(date -u -d "$(( $(date -u +%u) - 1 )) days ago" +%Y-%m-%d)
+          sent=$(gh api "repos/${{ github.repository }}/actions/workflows/cfo-brief.yml/runs?status=success&created=%3E%3D${monday}" \
+            --jq '[.workflow_runs[] | select(.display_title | contains("dry-run") | not)] | length')
+          echo "Úspěšných běhů od ${monday}: ${sent}"
+          if [ "$sent" -gt 0 ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - uses: actions/checkout@v4
+        if: steps.guard.outputs.skip != 'true'
 
       - uses: actions/setup-python@v5
+        if: steps.guard.outputs.skip != 'true'
         with:
           python-version: "3.12"
 
       - name: Instalace závislostí
+        if: steps.guard.outputs.skip != 'true'
         run: pip install -r cfo-brief/requirements.txt
 
       - name: Generování a odeslání newsletteru
+        if: steps.guard.outputs.skip != 'true'
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}

@@ -81,14 +81,39 @@ V záložce **Actions** → *Kontrola objednávek* → **Run workflow**.
 
 ## 2. CFO Newsletter
 
-Každé pondělí v 04:30 UTC (6:30 letního / 5:30 zimního pražského času) se
-vygeneruje česky psaný týdenní finanční briefing pro CFO a pošle se e-mailem
-jako HTML.
+Každé pondělí ráno se vygeneruje česky psaný týdenní finanční briefing pro CFO
+a pošle se e-mailem jako HTML.
 
 ### Jak to funguje
 
 - [`cfo-brief/brief.py`](cfo-brief/brief.py) — generování přes Gemini s Google Search, sestavení HTML, odeslání přes Resend.
 - [`.github/workflows/cfo-brief.yml`](.github/workflows/cfo-brief.yml) — týdenní spouštění.
+
+### Spouštění
+
+GitHub plánovač (`schedule`) v pondělí ráno běhy zpožďuje i o 5+ hodin, proto
+workflow spouští externě [cron-job.org](https://cron-job.org) přes
+`workflow_dispatch`. Cron `47 0 * * 1` ve workflow zůstává jako záloha.
+
+Pojistka: před generováním se workflow přes GitHub API podívá, jestli už od
+pondělí 00:00 UTC proběhl úspěšný (ne dry-run) běh. Pokud ano, skončí bez
+odeslání — e-mail tak přijde jen jednou, ať doběhne cokoli dřív.
+Ruční běh se zaškrtnutým **„Poslat i když už tento týden odešel"** pojistku obejde.
+
+Nastavení cron-job.org (zdarma):
+
+1. GitHub → Settings → Developer settings → *Fine-grained tokens* → nový token,
+   *Repository access*: jen `Notifikace`, *Permissions*: **Actions: Read and write**.
+   Expirace max. 1 rok — do kalendáře si dej připomínku na obnovu.
+2. cron-job.org → *Create cronjob*:
+   - URL: `https://api.github.com/repos/vaclav-mikula/Notifikace/actions/workflows/cfo-brief.yml/dispatches`
+   - Schedule: pondělí 05:00, časové pásmo **Europe/Prague** (letní čas řeší samo)
+   - *Advanced* → Request method **POST**, hlavičky:
+     `Authorization: Bearer <token>`, `Accept: application/vnd.github+json`,
+     `X-GitHub-Api-Version: 2022-11-28`
+   - Request body: `{"ref":"main"}`
+3. Tlačítkem *Test run* ověř odpověď **204**. Pokud už tento týden newsletter odešel,
+   pojistka běh přeskočí, takže test druhý e-mail nepošle.
 
 Aby se v briefingu neobjevovala vymyšlená čísla, skript si před generováním sám
 stáhne klíčové sazby a kurzy z autoritativních zdrojů (kurzy EUR/CZK a USD/CZK
