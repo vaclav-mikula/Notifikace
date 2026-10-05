@@ -1,8 +1,11 @@
 name: Weekly Newsletter
+run-name: ${{ inputs.dry_run && 'Weekly Newsletter (dry-run)' || 'Weekly Newsletter' }}
 
 on:
+  # Hlavní spouštěč je externí (cron-job.org → workflow_dispatch, viz README),
+  # protože GitHub plánovač běhy zpožďuje i o několik hodin.
+  # Tenhle cron je jen záloha; pojistka níže zajistí, že e-mail odejde jednou týdně.
   schedule:
-    # Každý pátek v 15:17 GMT/UTC (bez ohledu na letní/zimní čas), odpolední doručení.
     - cron: "17 15 * * 5"
   workflow_dispatch:
     inputs:
@@ -10,21 +13,52 @@ on:
         description: "Jen tisk do logu, e-mail neposílat"
         type: boolean
         default: false
+      force:
+        description: "Poslat i když už tento týden odešel"
+        type: boolean
+        default: false
+
+# Externí spouštěč a záložní cron se mohou sejít — druhý běh počká a pak se přeskočí.
+concurrency:
+  group: weekly-newsletter
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  actions: read
 
 jobs:
   newsletter:
     runs-on: ubuntu-latest
     steps:
+      - name: Kontrola, zda už tento týden odešel
+        id: guard
+        if: ${{ !inputs.dry_run && !inputs.force }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Týden se počítá od pátku 00:00 UTC, aby ruční běh pondělí–čtvrtek páteční newsletter neblokoval.
+          friday=$(date -u -d "$(( ($(date -u +%u) + 2) % 7 )) days ago" +%Y-%m-%d)
+          sent=$(gh api "repos/${{ github.repository }}/actions/workflows/weekly-newsletter.yml/runs?status=success&created=%3E%3D${friday}" --jq '[.workflow_runs[] | select(.display_title | contains("dry-run") | not)] | length')
+          echo "Úspěšných běhů od ${friday}: ${sent}"
+          if [ "$sent" -gt 0 ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - uses: actions/checkout@v4
+        if: steps.guard.outputs.skip != 'true'
 
       - uses: actions/setup-python@v5
+        if: steps.guard.outputs.skip != 'true'
         with:
           python-version: "3.12"
 
       - name: Instalace závislostí
+        if: steps.guard.outputs.skip != 'true'
         run: pip install -r weekly-brief/requirements.txt
 
       - name: Generování a odeslání newsletteru
+        if: steps.guard.outputs.skip != 'true'
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}

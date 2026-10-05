@@ -133,14 +133,14 @@ je do promptu s instrukcí, aby je model použil přesně.
 
 V záložce **Actions** → *CFO Newsletter* → **Run workflow**.
 Zaškrtnutím **„Jen tisk do logu, e-mail neposílat"** se briefing pouze vypíše
-do logu (`DRY_RUN`) a e-mail se neodešle.
+do logu (`DRY_RUN`) a e-mail se neodešle. **„Poslat i když už tento týden odešel"**
+obejde pojistku.
 
 ---
 
 ## 3. Weekly Newsletter
 
-Každou sobotu ve 04:17 UTC (5:17 zimního / 6:17 letního pražského času) se
-vygeneruje týdenní newsletter a pošle se e-mailem jako HTML.
+Každý pátek odpoledne se vygeneruje týdenní newsletter a pošle se e-mailem jako HTML.
 
 Používá stejné technické řešení jako CFO Newsletter (Gemini + Google Search,
 odeslání přes Resend), liší se obsahem — pokrývá pět stálých sekcí, z toho dvě
@@ -169,6 +169,18 @@ Raději menší rozsah než vata.
   sestavení HTML, odeslání přes Resend.
 - [`.github/workflows/weekly-newsletter.yml`](.github/workflows/weekly-newsletter.yml) — týdenní spouštění.
 
+### Spouštění
+
+Stejně jako u CFO Newsletteru: hlavní spouštěč je cron-job.org přes
+`workflow_dispatch`, cron `17 15 * * 5` ve workflow je záloha a pojistka hlídá,
+aby e-mail odešel jen jednou. Týden se tu počítá **od pátku 00:00 UTC**, takže
+ruční běh v pondělí–čtvrtek páteční newsletter nezablokuje.
+
+Na cron-job.org stačí druhá úloha se stejným tokenem a hlavičkami jako u CFO
+Newsletteru, jen:
+- URL: `https://api.github.com/repos/vaclav-mikula/Notifikace/actions/workflows/weekly-newsletter.yml/dispatches`
+- Schedule: pátek 17:15, časové pásmo **Europe/Prague**
+
 Model si aktuální dění dohledává sám přes **Google Search**. Systémový prompt mu
 zakazuje uvádět jakékoli číslo, které si přímo nedohledal — raději zprávu bez
 čísla než vymyšlený údaj.
@@ -189,4 +201,5 @@ není potřeba nastavovat nic nového.
 
 V záložce **Actions** → *Weekly Newsletter* → **Run workflow**.
 Zaškrtnutím **„Jen tisk do logu, e-mail neposílat"** se newsletter pouze vypíše
-do logu (`DRY_RUN`) a e-mail se neodešle.
+do logu (`DRY_RUN`) a e-mail se neodešle. **„Poslat i když už tento týden odešel"**
+obejde pojistku.
