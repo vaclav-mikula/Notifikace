@@ -175,8 +175,9 @@ Raději menší rozsah než vata.
 ### Spouštění
 
 Stejně jako u CFO Newsletteru: hlavní spouštěč je cron-job.org přes
-`workflow_dispatch`, cron `17 15 * * 5` ve workflow je záloha a pojistka hlídá,
-aby e-mail odešel jen jednou. Týden se tu počítá **od pátku 00:00 UTC**, takže
+`workflow_dispatch`, záloha na GitHubu cílí na 17:25 Praha (dva crony
+`25 15 * * 5` a `25 16 * * 5`, projde jen ten odpovídající letnímu/zimnímu času)
+a pojistka hlídá, aby e-mail odešel jen jednou. Týden se tu počítá **od pátku 00:00 UTC**, takže
 ruční běh v pondělí–čtvrtek páteční newsletter nezablokuje.
 
 Na cron-job.org stačí druhá úloha se stejným tokenem a hlavičkami jako u CFO
