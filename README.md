@@ -93,10 +93,13 @@ a pošle se e-mailem jako HTML.
 
 GitHub plánovač (`schedule`) v pondělí ráno běhy zpožďuje i o 5+ hodin, proto
 workflow spouští externě [cron-job.org](https://cron-job.org) přes
-`workflow_dispatch`. Cron `47 0 * * 1` ve workflow zůstává jako záloha.
+`workflow_dispatch` v pondělí v 5:59 pražského času. Záloha na GitHubu cílí na
+6:10 Praha — GitHub cron je v UTC a letní čas neřeší, proto jsou ve workflow dva
+(`10 4 * * 1` a `10 5 * * 1`) a projde jen ten, který právě odpovídá 6:10 v Praze.
+Protože cron-job.org odešle dřív, záloha typicky nic neposílá.
 
 Pojistka: před generováním se workflow přes GitHub API podívá, jestli už od
-pondělí 00:00 UTC proběhl úspěšný (ne dry-run) běh. Pokud ano, skončí bez
+pondělí 00:00 UTC newsletter skutečně odešel (dry-run ani přeskočené běhy se nepočítají). Pokud ano, skončí bez
 odeslání — e-mail tak přijde jen jednou, ať doběhne cokoli dřív.
 Ruční běh se zaškrtnutým **„Poslat i když už tento týden odešel"** pojistku obejde.
 
@@ -107,7 +110,7 @@ Nastavení cron-job.org (zdarma):
    Expirace max. 1 rok — do kalendáře si dej připomínku na obnovu.
 2. cron-job.org → *Create cronjob*:
    - URL: `https://api.github.com/repos/vaclav-mikula/Notifikace/actions/workflows/cfo-brief.yml/dispatches`
-   - Schedule: pondělí 05:00, časové pásmo **Europe/Prague** (letní čas řeší samo)
+   - Schedule: pondělí 05:59, časové pásmo **Europe/Prague** (letní čas řeší samo)
    - *Advanced* → Request method **POST**, hlavičky:
      `Authorization: Bearer <token>`, `Accept: application/vnd.github+json`,
      `X-GitHub-Api-Version: 2022-11-28`

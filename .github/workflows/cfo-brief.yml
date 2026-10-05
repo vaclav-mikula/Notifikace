@@ -5,8 +5,11 @@ on:
   # Hlavní spouštěč je externí (cron-job.org → workflow_dispatch, viz README),
   # protože GitHub plánovač běhy v pondělí ráno zpožďuje i o 5+ hodin.
   # Tenhle cron je jen záloha; pojistka níže zajistí, že e-mail odejde jednou týdně.
+  # Záloha má cílit na 6:10 Praha. GitHub cron je v UTC a letní čas neřeší, proto
+  # jsou tu dva (4:10 UTC = 6:10 léto, 5:10 UTC = 6:10 zima) a pojistka pustí jen ten správný.
   schedule:
-    - cron: "47 0 * * 1"
+    - cron: "10 4 * * 1"
+    - cron: "10 5 * * 1"
   workflow_dispatch:
     inputs:
       dry_run:
@@ -36,11 +39,29 @@ jobs:
         if: ${{ !inputs.dry_run && !inputs.force }}
         env:
           GH_TOKEN: ${{ github.token }}
+          EVENT: ${{ github.event_name }}
+          CRON: ${{ github.event.schedule }}
         run: |
+          if [ "$EVENT" = "schedule" ]; then
+            # +0200 = letní čas, +0100 = zimní
+            if [ "$(TZ=Europe/Prague date +%z)" = "+0200" ]; then expected="10 4 * * 1"; else expected="10 5 * * 1"; fi
+            if [ "$CRON" != "$expected" ]; then
+              echo "Cron '${CRON}' teď neodpovídá 6:10 v Praze, přeskakuji."
+              echo "skip=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          fi
+
+          # Počítají se jen běhy, kde newsletter opravdu odešel (přeskočené běhy jsou taky „success“).
           monday=$(date -u -d "$(( $(date -u +%u) - 1 )) days ago" +%Y-%m-%d)
-          sent=$(gh api "repos/${{ github.repository }}/actions/workflows/cfo-brief.yml/runs?status=success&created=%3E%3D${monday}" \
-            --jq '[.workflow_runs[] | select(.display_title | contains("dry-run") | not)] | length')
-          echo "Úspěšných běhů od ${monday}: ${sent}"
+          sent=0
+          for id in $(gh api "repos/${{ github.repository }}/actions/workflows/cfo-brief.yml/runs?status=success&created=%3E%3D${monday}" \
+              --jq '.workflow_runs[] | select(.display_title | contains("dry-run") | not) | .id'); do
+            n=$(gh api "repos/${{ github.repository }}/actions/runs/${id}/jobs" \
+              --jq '[.jobs[].steps[] | select(.name == "Generování a odeslání newsletteru" and .conclusion == "success")] | length')
+            sent=$((sent + n))
+          done
+          echo "Odeslaných newsletterů od ${monday}: ${sent}"
           if [ "$sent" -gt 0 ]; then
             echo "skip=true" >> "$GITHUB_OUTPUT"
           fi
