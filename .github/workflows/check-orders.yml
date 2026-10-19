@@ -4,9 +4,14 @@ on:
   # Spouští se jen externě (cron-job.org → workflow_dispatch každých 5 minut nonstop, viz README),
   # protože GitHub plánovač z pětiminutového cronu pustí jen pár běhů denně, a to se zpožděním.
   # Záložní cron na GitHubu záměrně není. Repo je VEŘEJNÉ → minuty zdarma neomezeně.
-  workflow_dispatch: {}  # cron-job.org a ruční spuštění tlačítkem
+  workflow_dispatch:  # cron-job.org a ruční spuštění tlačítkem
+    inputs:
+      test_email:
+        description: "Poslat ukázkové e-maily se skutečnými názvy akcí (stav se nemění)"
+        type: boolean
+        default: false
 
-# Potřeba pro commit stavu (seen_count.json) zpět do repozitáře
+# Potřeba pro commit stavu (seen_orders.json) zpět do repozitáře
 permissions:
   contents: write
 
@@ -38,14 +43,15 @@ jobs:
           SMTP_PASS: ${{ secrets.SMTP_PASS }}
           MAIL_FROM: ${{ secrets.MAIL_FROM }}
           MAIL_TO: ${{ secrets.MAIL_TO }}
+          TEST_EMAIL: ${{ inputs.test_email }}
         run: python check_orders.py
 
-      - name: Uložení stavu (seen_count.json)
+      - name: Uložení stavu (seen_orders.json)
         run: |
-          if [[ -n "$(git status --porcelain seen_count.json)" ]]; then
+          if [[ -n "$(git status --porcelain seen_orders.json)" ]]; then
             git config user.name "github-actions[bot]"
             git config user.email "github-actions[bot]@users.noreply.github.com"
-            git add seen_count.json
+            git add seen_orders.json
             git commit -m "Aktualizace stavu objednávek [skip ci]"
             git push
           else

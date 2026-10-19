@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Kontrola nových objednávek na objednavky.cun.cz.
 
-Přihlásí se, přečte počet objednávek z textu "Všechny (N)"
-a při zvýšení pošle e-mail. Stav (poslední známý počet) se
-ukládá do seen_count.json a commituje zpět přes GitHub Actions.
+Přihlásí se, přečte ID objednávek ze seznamu "Všechny" a "Potvrzené"
+a pro každé nové ID pošle e-mail. Stav (naposledy viděná ID) se
+ukládá do seen_orders.json a commituje zpět přes GitHub Actions.
 """
 
 import json
@@ -12,14 +12,16 @@ import re
 import smtplib
 import sys
 from email.message import EmailMessage
+from html.parser import HTMLParser
 from pathlib import Path
 
 import requests
 
 BASE = "https://objednavky.cun.cz"
 LIST_URL = f"{BASE}/objednavky"
+CONFIRMED_URL = f"{BASE}/objednavky/moje-potvrzene"
 LOGIN_URL = f"{BASE}/login"
-STATE_FILE = Path(__file__).parent / "seen_count.json"
+STATE_FILE = Path(__file__).parent / "seen_orders.json"
 
 
 def env(name: str, required: bool = True, default: str = "") -> str:
@@ -60,26 +62,77 @@ def login(session: requests.Session, email: str, password: str) -> str:
     return r.text
 
 
-def extract_counts(html: str) -> tuple[int, int]:
-    """Vrátí (vsechny, potvrzene) — obě čísla čtená přímo z textu stránky."""
-    m_all = re.search(r"Všechny\s*\((\d+)\)", html)
-    m_conf = re.search(r"Potvrzené\s*\((\d+)\)", html)
-    if not m_all:
-        sys.exit("CHYBA: nepodařilo se najít 'Všechny (N)' na stránce")
-    if not m_conf:
-        sys.exit("CHYBA: nepodařilo se najít 'Potvrzené (N)' na stránce")
-    return int(m_all.group(1)), int(m_conf.group(1))
+def extract_ids(html: str, label: str) -> set[int]:
+    """Vrátí ID objednávek ze seznamu (checkboxy name="id[]").
+
+    Počet nalezených ID se ověřuje proti číslu ve filtru, např. "Všechny (N)".
+    Kdyby se změnila struktura stránky nebo přibylo stránkování, skript raději
+    skončí chybou, než aby stav přepsal neúplným seznamem a pak poslal falešné e-maily.
+    """
+    m = re.search(rf"{label}\s*\((\d+)\)", html)
+    if not m:
+        sys.exit(f"CHYBA: nepodařilo se najít '{label} (N)' na stránce")
+    expected = int(m.group(1))
+    ids = {int(v) for v in re.findall(r'name="id\[\]"\s+value="(\d+)"', html)}
+    if len(ids) != expected:
+        sys.exit(f"CHYBA: v seznamu '{label}' nalezeno {len(ids)} objednávek, filtr uvádí {expected}")
+    return ids
 
 
-def load_state() -> dict:
+class TitleParser(HTMLParser):
+    """Sbírá názvy akcí: tučný text v buňce "Název akce" (td.show-modal) řádku <tr id="N">."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.titles: dict[int, str] = {}
+        self._row: int | None = None
+        self._in_cell = False
+        self._in_strong = False
+        self._text: list[str] = []
+
+    def handle_starttag(self, tag, attrs):
+        a = dict(attrs)
+        if tag == "tr":
+            self._row = int(a["id"]) if (a.get("id") or "").isdigit() else None
+        elif tag == "td":
+            self._in_cell = self._row is not None and "show-modal" in (a.get("class") or "").split()
+        elif tag == "strong" and self._in_cell and self._row not in self.titles:
+            self._in_strong = True
+            self._text = []
+
+    def handle_endtag(self, tag):
+        if tag == "strong" and self._in_strong:
+            self._in_strong = False
+            self.titles[self._row] = " ".join("".join(self._text).split())
+        elif tag == "td":
+            self._in_cell = False
+
+    def handle_data(self, data):
+        if self._in_strong:
+            self._text.append(data)
+
+
+def extract_titles(html: str) -> dict[int, str]:
+    p = TitleParser()
+    p.feed(html)
+    return p.titles
+
+
+def describe(ids: set[int], titles: dict[int, str]) -> str:
+    # Název chybí jen při změně struktury stránky — e-mail přesto odejde.
+    return "\n".join(f"- {titles.get(i) or f'(název nenalezen, ID {i})'}" for i in sorted(ids))
+
+
+def load_state() -> dict | None:
     if STATE_FILE.exists():
-        return json.loads(STATE_FILE.read_text(encoding="utf-8"))
-    return {"total": None, "confirmed": None}
+        data = json.loads(STATE_FILE.read_text(encoding="utf-8"))
+        return {"all": set(data["all"]), "confirmed": set(data["confirmed"])}
+    return None
 
 
-def save_state(total: int, confirmed: int) -> None:
+def save_state(all_ids: set[int], confirmed_ids: set[int]) -> None:
     STATE_FILE.write_text(
-        json.dumps({"total": total, "confirmed": confirmed}, ensure_ascii=False, indent=2),
+        json.dumps({"all": sorted(all_ids), "confirmed": sorted(confirmed_ids)}, indent=2) + "\n",
         encoding="utf-8",
     )
 
@@ -110,50 +163,51 @@ def main() -> None:
     session.headers.update({"User-Agent": "Mozilla/5.0 (order-notifier)"})
 
     html = login(session, env("CUN_EMAIL"), env("CUN_PASSWORD"))
-    total, confirmed = extract_counts(html)
-    print(f"Všechny: {total}, Potvrzené: {confirmed}")
+    all_ids = extract_ids(html, "Všechny")
+    titles = extract_titles(html)
 
-    state = load_state()
-    last_total = state.get("total")
-    last_confirmed = state.get("confirmed")
+    r = session.get(CONFIRMED_URL, timeout=30)
+    r.raise_for_status()
+    confirmed_ids = extract_ids(r.text, "Potvrzené")
+    titles = extract_titles(r.text) | titles
+    print(f"Všechny: {len(all_ids)}, Potvrzené: {len(confirmed_ids)}")
 
-    if last_total is None:
-        print("První běh — ukládám aktuální stav bez notifikace.")
-        save_state(total, confirmed)
+    if env("TEST_EMAIL", required=False) == "true":
+        # Ukázka obou e-mailů se skutečnými názvy (až tři nejnovější objednávky), stav se nemění.
+        send_email(
+            "[TEST] ČUN Nová objednávka",
+            f"Nové objednávky:\n\n{describe(set(sorted(all_ids)[-3:]), titles)}\n\nOtevřít: {LIST_URL}\n",
+        )
+        send_email(
+            "[TEST] ČUN Potvrzení objednávky",
+            f"Potvrzení na přepis:\n\n{describe(set(sorted(confirmed_ids)[-3:]), titles)}\n\nOtevřít: {CONFIRMED_URL}\n",
+        )
         return
 
-    if last_confirmed is None:
-        # Stav uložený starší verzí skriptu neobsahoval "confirmed".
-        # Doplníme ho bez notifikace, ať máme příště s čím porovnávat.
-        print("Chybí uložený počet potvrzených — doplňuji bez notifikace.")
-        last_confirmed = confirmed
+    state = load_state()
+    if state is None:
+        print("První běh — ukládám aktuální stav bez notifikace.")
+        save_state(all_ids, confirmed_ids)
+        return
 
-    changed = False
-
-    if total > last_total:
-        diff = total - last_total
+    new = all_ids - state["all"]
+    if new:
+        n = len(new)
         send_email(
-            f"ČUN Nová objednávka (+{diff})",
-            f"Na {LIST_URL} přibyl{'a' if diff == 1 else 'y'} nová objednávka.\n\n"
-            f"Dříve: {last_total}\nNyní:  {total} (+{diff})\n\nOtevřít: {LIST_URL}\n",
+            f"ČUN Nová objednávka (+{n})",
+            f"Nové objednávky:\n\n{describe(new, titles)}\n\nOtevřít: {LIST_URL}\n",
         )
-        changed = True
 
-    if confirmed > last_confirmed:
-        diff = confirmed - last_confirmed
+    newly_confirmed = confirmed_ids - state["confirmed"]
+    if newly_confirmed:
+        n = len(newly_confirmed)
         send_email(
-            f"ČUN Potvrzení objednávky (+{diff})",
-            f"Na {LIST_URL} bylo potvrzeno {diff} objednávk{'a' if diff == 1 else 'y'}.\n\n"
-            f"Potvrzené dříve: {last_confirmed}\nPotvrzené nyní:  {confirmed} (+{diff})\n\nOtevřít: {LIST_URL}\n",
+            f"ČUN Potvrzení objednávky (+{n})",
+            f"Potvrzení na přepis:\n\n{describe(newly_confirmed, titles)}\n\nOtevřít: {CONFIRMED_URL}\n",
         )
-        changed = True
 
-    if total < last_total or confirmed < last_confirmed:
-        print(f"Počty klesly (Všechny: {last_total}→{total}, Potvrzené: {last_confirmed}→{confirmed}), aktualizuji stav.")
-        changed = True
-
-    if changed:
-        save_state(total, confirmed)
+    if all_ids != state["all"] or confirmed_ids != state["confirmed"]:
+        save_state(all_ids, confirmed_ids)
     else:
         print("Beze změny.")
 

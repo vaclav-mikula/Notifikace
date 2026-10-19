@@ -2,7 +2,7 @@
 
 Repozitář obsahuje tři nezávislé automatizace běžící přes GitHub Actions:
 
-1. **Kontrola objednávek** – každých 5 minut hlídá počet objednávek a posílá e-mail při změně.
+1. **Kontrola objednávek** – každých 5 minut hlídá nové a nově potvrzené objednávky a posílá e-mail.
 2. **CFO Newsletter** – každé pondělí generuje týdenní finanční briefing a posílá ho e-mailem.
 3. **Weekly Newsletter** – každou sobotu shrne dění ve světě, v ČR, v AI/data engineeringu a v SAP.
 
@@ -10,30 +10,38 @@ Repozitář obsahuje tři nezávislé automatizace běžící přes GitHub Actio
 
 ## 1. Kontrola objednávek
 
-Každých 5 minut se skript přihlásí na `objednavky.cun.cz`, přečte ze stránky
-počty objednávek a porovná je s uloženým stavem. Když některý počet vzroste,
-pošle e-mail.
+Každých 5 minut se skript přihlásí na `objednavky.cun.cz`, přečte ID objednávek
+ze seznamů **Všechny** (`/objednavky`) a **Potvrzené** (`/objednavky/moje-potvrzene`)
+a porovná je s uloženým stavem. Když se objeví ID, které tam minule nebylo, pošle e-mail.
 
 ### Jak to funguje
 
-- [`check_orders.py`](check_orders.py) — přihlášení, načtení počtů, porovnání, odeslání e-mailu.
-- [`seen_count.json`](seen_count.json) — uložený stav: poslední známý počet **Všechny** (`total`)
-  a **Potvrzené** (`confirmed`). Vytvoří se automaticky při prvním běhu a commituje se zpět do repa.
+- [`check_orders.py`](check_orders.py) — přihlášení, načtení ID a názvů akcí, porovnání, odeslání e-mailu.
+- [`seen_orders.json`](seen_orders.json) — uložený stav: ID objednávek v seznamu **Všechny** (`all`)
+  a **Potvrzené** (`confirmed`) z posledního běhu. Vytvoří se automaticky při prvním běhu a commituje se zpět do repa.
 - [`.github/workflows/check-orders.yml`](.github/workflows/check-orders.yml) — samotná kontrola; spouští ji každých 5 minut cron-job.org (viz níže).
 
-Skript nečte jednotlivé objednávky ani jejich ID — pouze dvě čísla z textu
-stránky (`Všechny (N)` a `Potvrzené (N)`). Posílají se dva typy notifikací:
+ID se čtou z checkboxů jednotlivých řádků seznamu (`name="id[]"`). Posílají se dva typy notifikací:
 
 | Změna | E-mail |
 |-------|--------|
-| vzroste `Všechny` | „ČUN Nová objednávka (+N)" |
-| vzroste `Potvrzené` | „ČUN Potvrzení objednávky (+N)" |
+| nové ID v seznamu `Všechny` | „ČUN Nová objednávka (+N)" |
+| nové ID v seznamu `Potvrzené` | „ČUN Potvrzení objednávky (+N)" |
 
-Pokud některý počet **klesne**, stav se jen tiše aktualizuje a e-mail se neposílá.
+V těle e-mailu je seznam názvů akcí (tučný nadpis z buňky *Název akce*), jeden na řádek,
+a odkaz na seznam. Kdyby se název nepodařilo najít, e-mail přesto odejde — místo názvu
+bude „(název nenalezen, ID N)“.
 
-> **Poznámka k přesnosti:** protože se porovnávají počty, a ne konkrétní ID,
-> nová objednávka se neohlásí v případě, že ve stejném pětiminutovém okně jiná
-> objednávka ze seznamu zmizí (počet zůstane stejný).
+Když objednávka ze seznamu zmizí, stav se jen tiše aktualizuje a e-mail se neposílá.
+Díky porovnání ID se nová objednávka ohlásí i tehdy, když mezitím jiná zmizí.
+
+Pojistka: počet nalezených ID se pokaždé ověřuje proti číslu ve filtru
+(`Všechny (N)`, `Potvrzené (N)`). Kdyby nesouhlasil — změnila se struktura stránky
+nebo přibylo stránkování — běh skončí chybou a stav se nepřepíše, aby nechodily
+falešné e-maily. Neúspěšný běh uvidíš v záložce **Actions** (a GitHub ti o něm pošle e-mail).
+
+ID objednávek jsou v `seen_orders.json` veřejně v repu (jde jen o čísla, bez dalších údajů).
+Do logu se vypisují jen počty — názvy akcí jdou jen do e-mailu, ne do veřejného logu ani do repa.
 
 ### Nastavení (GitHub Secrets)
 
@@ -89,7 +97,10 @@ objevit běh *Kontrola objednávek* s událostí `workflow_dispatch`.
 V záložce **Actions** → *Kontrola objednávek* → **Run workflow**.
 
 - **První běh** jen uloží aktuální stav a **nepošle** e-mail (aby tě nezahltil starými objednávkami).
-- Od druhého běhu posílá e-mail jen při nárůstu počtů.
+- Od druhého běhu posílá e-mail jen při nových ID objednávek.
+- Zaškrtnutím **„Poslat ukázkové e-maily…"** přijdou oba typy e-mailů s předponou `[TEST]`
+  a se skutečnými názvy až tří nejnovějších objednávek — hodí se k ověření, že přihlášení
+  i odesílání funguje. Stav se při tom nemění.
 
 ---
 
