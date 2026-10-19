@@ -19,7 +19,7 @@ pošle e-mail.
 - [`check_orders.py`](check_orders.py) — přihlášení, načtení počtů, porovnání, odeslání e-mailu.
 - [`seen_count.json`](seen_count.json) — uložený stav: poslední známý počet **Všechny** (`total`)
   a **Potvrzené** (`confirmed`). Vytvoří se automaticky při prvním běhu a commituje se zpět do repa.
-- [`.github/workflows/check-orders.yml`](.github/workflows/check-orders.yml) — spouští kontrolu každých 5 minut.
+- [`.github/workflows/check-orders.yml`](.github/workflows/check-orders.yml) — samotná kontrola; spouští ji každých 5 minut cron-job.org (viz níže).
 
 Skript nečte jednotlivé objednávky ani jejich ID — pouze dvě čísla z textu
 stránky (`Všechny (N)` a `Potvrzené (N)`). Posílají se dva typy notifikací:
@@ -66,9 +66,23 @@ Volitelné (mají rozumné výchozí hodnoty pro Gmail):
 
 ### Rozvrh spouštění
 
-Po–Pá každých 5 minut v okně **7:30–18:45** pražského letního času.
-GitHub cron běží v UTC a neřeší přechod na zimní čas, takže v zimě se okno
-přirozeně posune na 6:30–17:45.
+GitHub plánovač (`schedule`) z pětiminutového cronu pustí jen pár běhů denně,
+navíc se zpožděním v řádu hodin. Proto kontrolu spouští externě
+[cron-job.org](https://cron-job.org) přes `workflow_dispatch` **každých 5 minut,
+nonstop (i v noci a o víkendu)**.
+
+Záložní cron na GitHubu záměrně není (na rozdíl od newsletterů) — když
+cron-job.org nespouští, kontrola neběží. Proto si na cron-job.org zapni e-mail
+při selhání úlohy.
+
+Nastavení cron-job.org — stačí další úloha se stejným tokenem a hlavičkami jako
+u CFO Newsletteru (viz níže), jen:
+- URL: `https://api.github.com/repos/vaclav-mikula/Notifikace/actions/workflows/check-orders.yml/dispatches`
+- Schedule: **každých 5 minut** (všechny dny a hodiny)
+- Request method **POST**, request body: `{"ref":"main"}`
+
+Tlačítkem *Test run* ověř odpověď **204** a v záložce **Actions** by se měl
+objevit běh *Kontrola objednávek* s událostí `workflow_dispatch`.
 
 ### Ruční spuštění / test
 
