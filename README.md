@@ -38,7 +38,11 @@ Díky porovnání ID se nová objednávka ohlásí i tehdy, když mezitím jiná
 Pojistka: počet nalezených ID se pokaždé ověřuje proti číslu ve filtru
 (`Všechny (N)`, `Potvrzené (N)`). Kdyby nesouhlasil — změnila se struktura stránky
 nebo přibylo stránkování — běh skončí chybou a stav se nepřepíše, aby nechodily
-falešné e-maily. Neúspěšný běh uvidíš v záložce **Actions** (a GitHub ti o něm pošle e-mail).
+falešné e-maily.
+
+Občasné selhání (např. web je chvíli nedostupný) se toleruje: běh zůstane zelený
+jen s varováním a stav se neuloží. Jako neúspěšný se běh označí (a GitHub ti pošle
+e-mail) až při **3. selhání po sobě**, tj. zhruba po 15 minutách výpadku.
 
 ID objednávek jsou v `seen_orders.json` veřejně v repu (jde jen o čísla, bez dalších údajů).
 Do logu se vypisují jen počty — názvy akcí jdou jen do e-mailu, ne do veřejného logu ani do repa.
