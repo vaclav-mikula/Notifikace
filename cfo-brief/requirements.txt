@@ -1,3 +1,3 @@
-google-genai>=1.0.0
+google-genai>=1.0.0,<3  # 3.0 přepnul výchozí API na v1, kde nejsou preview modely
 markdown==3.7
 requests>=2.31.0

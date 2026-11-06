@@ -151,7 +151,11 @@ RESEND_URL = "https://api.resend.com/emails"
 
 def generate_brief(date_str: str, period: str) -> str:
     """Vygeneruje newsletter přes Gemini s Google Search."""
-    client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
+    # Preview modely (gemini-3.1-pro-preview) existují jen na v1beta; SDK 3.x má výchozí v1.
+    client = genai.Client(
+        api_key=os.environ["GEMINI_API_KEY"],
+        http_options=types.HttpOptions(api_version="v1beta"),
+    )
     response = client.models.generate_content(
         model=MODEL,
         contents=BRIEF_PROMPT.format(date=date_str, period=period),

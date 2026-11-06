@@ -117,7 +117,11 @@ def generate_brief(date_str: str) -> str:
     prompt = BRIEF_PROMPT.format(date=date_str)
     if verified:
         prompt = verified + "\n\n" + prompt
-    client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
+    # Preview modely (gemini-3.1-pro-preview) existují jen na v1beta; SDK 3.x má výchozí v1.
+    client = genai.Client(
+        api_key=os.environ["GEMINI_API_KEY"],
+        http_options=types.HttpOptions(api_version="v1beta"),
+    )
     response = client.models.generate_content(
         model=MODEL,
         contents=prompt,
