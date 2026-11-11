@@ -34,6 +34,9 @@ jobs:
   newsletter:
     runs-on: ubuntu-latest
     steps:
+      # Checkout vždy — i kvůli notify.py pro upozornění na selhání.
+      - uses: actions/checkout@v4
+
       - name: Kontrola, zda už tento týden odešel
         id: guard
         if: ${{ !inputs.dry_run && !inputs.force }}
@@ -67,9 +70,6 @@ jobs:
             echo "skip=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - uses: actions/checkout@v4
-        if: steps.guard.outputs.skip != 'true'
-
       - uses: actions/setup-python@v5
         if: steps.guard.outputs.skip != 'true'
         with:
@@ -88,3 +88,17 @@ jobs:
           TO_EMAIL: ${{ secrets.TO_EMAIL }}
           DRY_RUN: ${{ inputs.dry_run }}
         run: python weekly-brief/brief.py
+
+      # E-maily GitHubu o selhaných bězích jsou vypnuté (viz README) — upozornění posíláme sami.
+      - name: Upozornění na selhání
+        if: failure()
+        env:
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          MAIL_FROM: ${{ secrets.MAIL_FROM }}
+          MAIL_TO: ${{ secrets.MAIL_TO }}
+        run: |
+          python3 notify.py "⚠ Weekly Newsletter selhal" "Běh workflow Weekly Newsletter skončil chybou."$'\n\n'"Detail běhu: ${RUN_URL}"

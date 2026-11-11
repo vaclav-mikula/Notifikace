@@ -12,7 +12,7 @@ on:
         default: false
 
 # contents: commit stavu (seen_orders.json) zpět do repozitáře
-# actions: čtení předchozích běhů kvůli toleranci občasných selhání
+# actions: čtení předchozích běhů kvůli toleranci občasných selhání a jednorázovému upozornění
 permissions:
   contents: write
   actions: read
@@ -64,32 +64,52 @@ jobs:
             echo "Beze změny stavu."
           fi
 
-      # Běh se označí jako neúspěšný (a GitHub pošle e-mail) až při 3. selhání kontroly po sobě.
+      # Upozornění e-mailem jen JEDNOU za výpadek: při 3. selhání kontroly po sobě (cca 15 min).
+      # Další selhání už jen zapíšou varování a běh zůstane zelený; po zotavení přijde jeden e-mail.
+      # (E-maily GitHubu o selhaných bězích jsou vypnuté — viz README.)
       # Selhání předchozího běhu se pozná podle toho, že v něm tenhle krok proběhl (nebyl „skipped“),
       # nebo že celý běh skončil chybou (např. selhala instalace). Název kroku proto neměnit.
       - name: Vyhodnocení selhání
-        if: steps.check.outcome == 'failure'
+        if: failure() || steps.check.outcome == 'failure'
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
           RUN_ID: ${{ github.run_id }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          MAIL_FROM: ${{ secrets.MAIL_FROM }}
+          MAIL_TO: ${{ secrets.MAIL_TO }}
         run: |
-          failed=0
-          for run in $(gh api "repos/${REPO}/actions/workflows/check-orders.yml/runs?status=completed&per_page=3" \
-              --jq ".workflow_runs[] | select(.id != ${RUN_ID}) | \"\(.id):\(.conclusion)\"" | head -n 2); do
-            id=${run%%:*}
-            conclusion=${run#*:}
-            n=$(gh api "repos/${REPO}/actions/runs/${id}/jobs" \
-              --jq '[.jobs[].steps[] | select(.name == "Vyhodnocení selhání" and .conclusion != "skipped")] | length')
-            if [ "$conclusion" = "failure" ] || [ "$n" -gt 0 ]; then
-              failed=$((failed + 1))
-            else
-              break
-            fi
-          done
-          total=$((failed + 1))
-          if [ "$total" -ge 3 ]; then
-            echo "::error::Kontrola objednávek selhala ${total}× po sobě."
-            exit 1
+          total=$(( $(bash .github/scripts/prev_failures.sh 2) + 1 ))
+          if [ "$total" -eq 3 ]; then
+            echo "::error::Kontrola objednávek selhala ${total}× po sobě, posílám upozornění."
+            python3 notify.py "⚠ Kontrola objednávek selhává" \
+              "Kontrola objednávek selhala 3× po sobě (cca 15 minut). Další selhání už se hlásit nebudou; až to zase poběží, přijde jeden e-mail."$'\n\n'"Detail běhu: ${RUN_URL}"
+          elif [ "$total" -gt 3 ]; then
+            echo "::warning::Kontrola objednávek selhává dál (alespoň ${total}× po sobě), upozornění už odešlo."
+          else
+            echo "::warning::Kontrola objednávek selhala (${total}× po sobě), toleruji — upozornění až při 3. selhání."
           fi
-          echo "::warning::Kontrola objednávek selhala (${total}× po sobě), toleruji — upozornění až od 3. selhání."
+
+      - name: Hlášení obnovení
+        if: success() && steps.check.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          MAIL_FROM: ${{ secrets.MAIL_FROM }}
+          MAIL_TO: ${{ secrets.MAIL_TO }}
+        run: |
+          # Obnovení se hlásí jen po výpadku, o kterém už odešlo upozornění (3+ selhání po sobě).
+          if [ "$(bash .github/scripts/prev_failures.sh 3)" -ge 3 ]; then
+            python3 notify.py "✅ Kontrola objednávek zase funguje" \
+              "Kontrola objednávek po výpadku znovu proběhla úspěšně."$'\n\n'"Detail běhu: ${RUN_URL}"
+          fi

@@ -9,13 +9,13 @@ ukládá do seen_orders.json a commituje zpět přes GitHub Actions.
 import json
 import os
 import re
-import smtplib
 import sys
-from email.message import EmailMessage
 from html.parser import HTMLParser
 from pathlib import Path
 
 import requests
+
+from notify import send_email
 
 BASE = "https://objednavky.cun.cz"
 LIST_URL = f"{BASE}/objednavky"
@@ -135,27 +135,6 @@ def save_state(all_ids: set[int], confirmed_ids: set[int]) -> None:
         json.dumps({"all": sorted(all_ids), "confirmed": sorted(confirmed_ids)}, indent=2) + "\n",
         encoding="utf-8",
     )
-
-
-def send_email(subject: str, body: str) -> None:
-    smtp_host = env("SMTP_HOST", required=False, default="smtp.gmail.com")
-    smtp_port = int(env("SMTP_PORT", required=False, default="587"))
-    smtp_user = env("SMTP_USER")
-    smtp_pass = env("SMTP_PASS")
-    mail_to = env("MAIL_TO")
-    mail_from = env("MAIL_FROM", required=False, default=smtp_user)
-
-    msg = EmailMessage()
-    msg["Subject"] = subject
-    msg["From"] = mail_from
-    msg["To"] = mail_to
-    msg.set_content(body)
-
-    with smtplib.SMTP(smtp_host, smtp_port, timeout=30) as s:
-        s.starttls()
-        s.login(smtp_user, smtp_pass)
-        s.send_message(msg)
-    print(f"E-mail odeslán: {subject}")
 
 
 def main() -> None:

@@ -20,6 +20,8 @@ a porovná je s uloženým stavem. Když se objeví ID, které tam minule nebylo
 - [`seen_orders.json`](seen_orders.json) — uložený stav: ID objednávek v seznamu **Všechny** (`all`)
   a **Potvrzené** (`confirmed`) z posledního běhu. Vytvoří se automaticky při prvním běhu a commituje se zpět do repa.
 - [`.github/workflows/check-orders.yml`](.github/workflows/check-orders.yml) — samotná kontrola; spouští ji každých 5 minut cron-job.org (viz níže).
+- [`notify.py`](notify.py) — odeslání e-mailu přes SMTP (notifikace i upozornění na výpadky).
+- [`.github/workflows/watchdog.yml`](.github/workflows/watchdog.yml) — hodinový hlídač, jestli kontrola vůbec běží.
 
 ID se čtou z checkboxů jednotlivých řádků seznamu (`name="id[]"`). Posílají se dva typy notifikací:
 
@@ -41,8 +43,27 @@ nebo přibylo stránkování — běh skončí chybou a stav se nepřepíše, ab
 falešné e-maily.
 
 Občasné selhání (např. web je chvíli nedostupný) se toleruje: běh zůstane zelený
-jen s varováním a stav se neuloží. Jako neúspěšný se běh označí (a GitHub ti pošle
-e-mail) až při **3. selhání po sobě**, tj. zhruba po 15 minutách výpadku.
+jen s varováním a stav se neuloží.
+
+### Upozornění na výpadky — jeden e-mail za výpadek
+
+E-maily GitHubu o selhaných bězích jsou **vypnuté** (GitHub → Settings → Notifications →
+System → Actions → bez e-mailu), protože chodí za každý běh, tj. při výpadku každých 5 minut.
+Místo nich posílají workflowy vlastní e-maily přes [`notify.py`](notify.py) (stejné SMTP secrets):
+
+| Situace | E-mail |
+|---|---|
+| Kontrola selže **3× po sobě** (cca 15 min) | `⚠ Kontrola objednávek selhává` — jen jednou, další selhání se jen zapíšou do logu |
+| Kontrola po takovém výpadku zase projde | `✅ Kontrola objednávek zase funguje` |
+| Kontrola **přes hodinu vůbec neproběhla** (startup_failure při výpadku GitHub Actions, chyba ve YAML, cron-job.org nespouští) | `⚠ Kontrola objednávek neběží` — jen jednou za výpadek, hlídá [`watchdog.yml`](.github/workflows/watchdog.yml) každou hodinu |
+| CFO / Weekly Newsletter skončí chybou | `⚠ … selhal` |
+
+Série selhání se počítá z historie běhů ([`.github/scripts/prev_failures.sh`](.github/scripts/prev_failures.sh)),
+nic se neukládá. Běhy se `startup_failure` sérii nepřeruší ani se nezapočítají.
+
+Omezení: když nefunguje celé GitHub Actions, neběží ani hlídač — e-mail přijde až po obnovení,
+pokud výpadek trval přes hodinu. GitHub navíc u veřejných repozitářů vypíná plánované běhy
+(`schedule`) po 60 dnech bez commitů; kdyby se hlídač vypnul, zapni ho v záložce Actions znovu.
 
 ID objednávek jsou v `seen_orders.json` veřejně v repu (jde jen o čísla, bez dalších údajů).
 Do logu se vypisují jen počty — názvy akcí jdou jen do e-mailu, ne do veřejného logu ani do repa.
@@ -84,8 +105,8 @@ navíc se zpožděním v řádu hodin. Proto kontrolu spouští externě
 nonstop (i v noci a o víkendu)**.
 
 Záložní cron na GitHubu záměrně není (na rozdíl od newsletterů) — když
-cron-job.org nespouští, kontrola neběží. Proto si na cron-job.org zapni e-mail
-při selhání úlohy.
+cron-job.org nespouští, kontrola neběží. To zachytí hlídač (viz výše); navíc si
+na cron-job.org můžeš zapnout e-mail při selhání úlohy.
 
 Nastavení cron-job.org — stačí další úloha se stejným tokenem a hlavičkami jako
 u CFO Newsletteru (viz níže), jen:

@@ -1,0 +1,80 @@
+name: Hlídač kontroly objednávek
+
+# Pošle JEDEN e-mail, když Kontrola objednávek déle než hodinu vůbec neproběhla — tj. běhy padají
+# na startup_failure (výpadek GitHub Actions, rozbitý YAML), nebo je cron-job.org přestal spouštět.
+# Selhání samotné kontroly (web nedostupný apod.) hlásí check-orders.yml sám, tady se neřeší.
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: watchdog
+  cancel-in-progress: false
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Kontrola posledního proběhlého běhu
+        id: watch
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          LIMIT_MIN: "60"
+        run: |
+          # „Proběhl“ = skončil success nebo failure (job se aspoň spustil); startup_failure se nepočítá.
+          last=""
+          for c in success failure; do
+            t=$(gh api "repos/${REPO}/actions/workflows/check-orders.yml/runs?status=${c}&per_page=1" \
+              --jq '.workflow_runs[0].created_at // empty')
+            if [[ "$t" > "$last" ]]; then last=$t; fi
+          done
+          if [ -z "$last" ]; then
+            echo "Kontrola objednávek zatím nikdy neproběhla, nic nehlídám."
+            exit 0
+          fi
+          age=$(( ($(date -u +%s) - $(date -u -d "$last" +%s)) / 60 ))
+          echo "Poslední proběhlý běh kontroly: ${last} (před ${age} min)."
+          if [ "$age" -lt "$LIMIT_MIN" ]; then
+            exit 0
+          fi
+
+          # Upozornit jen jednou za výpadek: pokud od posledního proběhlého běhu už upozornění odešlo, mlčet.
+          sent=0
+          for id in $(gh api "repos/${REPO}/actions/workflows/watchdog.yml/runs?status=success&created=%3E%3D${last}" \
+              --jq '.workflow_runs[].id'); do
+            n=$(gh api "repos/${REPO}/actions/runs/${id}/jobs" \
+              --jq '[.jobs[].steps[] | select(.name == "Odeslání upozornění" and .conclusion == "success")] | length')
+            sent=$((sent + n))
+          done
+          if [ "$sent" -gt 0 ]; then
+            echo "Upozornění na tento výpadek už odešlo."
+            exit 0
+          fi
+          echo "alert=true" >> "$GITHUB_OUTPUT"
+          echo "last=${last}" >> "$GITHUB_OUTPUT"
+          echo "age=${age}" >> "$GITHUB_OUTPUT"
+
+      # Název kroku neměnit — podle něj se pozná, že upozornění už odešlo.
+      - name: Odeslání upozornění
+        if: steps.watch.outputs.alert == 'true'
+        env:
+          LAST: ${{ steps.watch.outputs.last }}
+          AGE: ${{ steps.watch.outputs.age }}
+          ACTIONS_URL: ${{ github.server_url }}/${{ github.repository }}/actions/workflows/check-orders.yml
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          MAIL_FROM: ${{ secrets.MAIL_FROM }}
+          MAIL_TO: ${{ secrets.MAIL_TO }}
+        run: |
+          python3 notify.py "⚠ Kontrola objednávek neběží" \
+            "Kontrola objednávek naposledy proběhla ${LAST} UTC (před ${AGE} min). Běhy se buď nespouštějí (cron-job.org), nebo padají ještě před startem (výpadek GitHub Actions, chyba ve workflow). Další upozornění na tento výpadek už nepřijde."$'\n\n'"Běhy: ${ACTIONS_URL}"$'\n'"Stav GitHubu: https://www.githubstatus.com"
